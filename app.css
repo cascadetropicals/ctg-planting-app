@@ -150,3 +150,6 @@ button{cursor:pointer}
 .card .btn{width:100%}
 .err{color:var(--red);min-height:1.2em;margin:0;font-size:14px;font-weight:600}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.fld[hidden]{display:none!important}
+.fld.ro input{opacity:.75;background:transparent;border-style:dashed}

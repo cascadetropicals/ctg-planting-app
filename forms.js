@@ -5,77 +5,85 @@ const F = (k, label, type = 'text', extra = {}) => ({ k, label, type, ...extra }
 const QTY = 'cantidad de plantas / plug Qty (count plugs - no flats)';
 const SIZE_ES = 'tamaño / size';
 
+const E = (k, label, extra = {}) => F(k, label, 'enum', extra);
+const RO = { ro: true };
+// Plug planting form (GF_PlugPlanting_Form): info rows read-only, editable: qty, Employee, Employee 2, Casa, Notes
 const PLUG_FIELDS = [
-  F('Choose Plant', 'Choose plant', 'plant', { req: true, src: 'plug' }),
+  F('Choose Plant', 'Plant', 'plant', { ro: true, src: 'plug' }),
+  F('FromContain', 'From container', 'text', RO), F(SIZE_ES, 'Size', 'text', RO), F('Qty of flats', 'Qty of flats', 'text', RO), F('Goal', 'Goal', 'text', RO), F('QCell', 'QCell', 'text', RO),
   F(QTY, 'Quantity (plugs, not flats)', 'num', { req: true }),
-  F('Casa / Greenhouse', 'Casa / Greenhouse', 'enum', { req: true, list: 'greenhouse' }),
+  E('Employee', 'Employee', { req: true, list: 'employee' }),
+  E('Employee 2', 'Employee 2', { list: 'employee', showIf: v => !!v['Employee'] }),
+  E('Casa / Greenhouse', 'Casa / Greenhouse', { req: true, list: 'greenhouse' }),
   F('Notas / Notes', 'Notas / Notes', 'long'),
-  F(SIZE_ES, 'Tamaño / size', 'enum', { req: true, list: 'size' }),
-  F('FromContain', 'From container', 'enum', { more: true, list: 'fromContain' }),
-  F('Vendor', 'Vendor', 'enum', { more: true, list: 'vendor' }),
-  F('Plant Date', 'Plant date', 'date', { more: true }),
-  F('ToContain', 'To container', 'enum', { more: true, list: 'toContain' }),
-  F('QCell', 'QCell', 'num', { more: true }),
-  F('Employee', 'Employee', 'enum', { more: true, list: 'employee' }),
-  F('Employee 2', 'Employee 2', 'enum', { more: true, list: 'employee' }),
-  F('Qty Projected', 'Qty projected', 'num', { more: true }),
-  F('Ready Date', 'Ready date', 'date', { more: true }),
-  F('Goal', 'Goal', 'num', { more: true }),
-  F('Plug Type', 'Plug type', 'text', { more: true }),
-  F('Qty of flats', 'Qty of flats', 'num', { more: true }),
-  F('Forecast #', 'Forecast #', 'text', { more: true }),
-  F('Incoming ID', 'Incoming ID', 'text', { more: true }),
-  F('Assortment', 'Assortment', 'text', { more: true })
+  F('Vendor', 'Vendor', 'text', RO), F('Plant Date', 'Plant date', 'date', { ro: true }), F('ToContain', 'To container', 'text', RO),
+  F('Ready Date', 'Ready date', 'date', { ro: true }), F('Qty Projected', 'Qty projected', 'text', RO), F('Forecast #', 'Forecast #', 'text', RO), F('Assortment', 'Assortment', 'text', RO),
+  F('Plug Type', 'Plug type', 'text', { hide: true }), F('Incoming ID', 'Incoming ID', 'text', { hide: true })
 ];
 const FIN_FIELDS = [
-  F('Choose Plant', 'Choose plant', 'plant', { req: true, src: 'item' }),
-  F('Escanear UPC / Scan UPC', 'Escanear UPC / Scan UPC', 'text', { upc: true }),
+  F('Choose Plant', 'Plant', 'plant', { ro: true, src: 'item' }),
+  F('FromContain', 'From container', 'text', RO), F('Goal', 'Goal', 'text', RO), F('QCell', 'QCell', 'text', RO),
+  F('Size', 'Size', 'enum', { req: false, list: 'size' }),
   F('cantidad / Qty', 'Cantidad / Qty', 'num', { req: true }),
-  F('Casa / Greenhouse', 'Casa / Greenhouse', 'enum', { req: true, list: 'greenhouse' }),
-  F('linea', 'Linea', 'text'),
+  F('Plugs used', 'Plugs used', 'num', { showIf: (v, L) => plugStock(L, v['Choose Plant']) > 0 && Number(v['cantidad / Qty']) > 0 }),
+  F('INV_Plugs Qty on Hand', 'INV_Plugs Qty on Hand', 'text', { ro: true, calc: (v, L) => { const s = plugStock(L, v['Choose Plant']); return s == null ? '' : String(s - (Number(v['Plugs used']) || 0)); }, showIf: (v, L) => plugStock(L, v['Choose Plant']) != null }),
+  E('Employee', 'Employee', { req: true, list: 'employee' }),
+  E('Employee 2', 'Employee 2', { list: 'employee', showIf: v => !!v['Employee'] }),
+  E('Casa / Greenhouse', 'Casa / Greenhouse', { req: true, list: 'greenhouse' }),
   F('Notas / Notes', 'Notas / Notes', 'long'),
-  F('Employee', 'Employee', 'enum', { req: true, list: 'employee' }),
-  F('Employee 2', 'Employee 2', 'enum', { more: true, list: 'employee' }),
-  F('Plug Location', 'Plug location', 'enum', { more: true, list: 'plugLocation' }),
-  F('Item Code', 'Item code', 'text', { more: true }),
-  F('Item #', 'Item #', 'text', { more: true }),
-  F('Plugs used', 'Plugs used', 'num', { more: true }),
-  F('FromContain', 'From container', 'enum', { more: true, list: 'fromContain' }),
-  F('Vendor', 'Vendor', 'enum', { more: true, list: 'vendor' }),
-  F('Plant Date', 'Plant date', 'date', { more: true }),
-  F('QCell', 'QCell', 'num', { more: true }),
-  F('Qty Projected', 'Qty projected', 'num', { more: true }),
-  F('Ready Date', 'Ready date', 'date', { more: true }),
-  F('Goal', 'Goal', 'num', { more: true }),
-  F('Size', 'Size', 'enum', { more: true, list: 'size' }),
-  F('Forecast #', 'Forecast #', 'text', { more: true }),
-  F('Incoming ID', 'Incoming ID', 'text', { more: true }),
-  F('Assortment', 'Assortment', 'text', { more: true })
+  F('Vendor', 'Vendor', 'text', RO), F('Plant Date', 'Plant date', 'date', { ro: true }), F('Ready Date', 'Ready date', 'date', { ro: true }),
+  F('Qty Projected', 'Qty projected', 'text', RO), F('Forecast #', 'Forecast #', 'text', RO), F('Assortment', 'Assortment', 'text', RO),
+  F('Item Code', 'Item code', 'text', { hide: true }), F('Item #', 'Item #', 'text', { hide: true }), F('Plug Location', 'Plug location', 'text', { hide: true }), F('Incoming ID', 'Incoming ID', 'text', { hide: true })
 ];
-// "Planting Finished addition" tab shows only these fields
-const FIN_ADD_KEYS = ['Choose Plant', 'cantidad / Qty', 'Casa / Greenhouse', 'Plug Location', 'QCell', 'FromContain', 'Employee', 'Employee 2', 'Notas / Notes'];
-const finAddFields = FIN_FIELDS.filter(f => FIN_ADD_KEYS.includes(f.k)).map(f => ({ ...f, more: false }))
-  .sort((a, b) => FIN_ADD_KEYS.indexOf(a.k) - FIN_ADD_KEYS.indexOf(b.k));
-const ADD_LABEL_FIELDS = [
+function plugStock(L, plant) {
+  const pn = L.ddPlant[String(plant || '').trim().toLowerCase().replace(/\s+/g, ' ')];
+  if (!pn) return null; const q = L.stock[pn.trim().toLowerCase().replace(/\s+/g, ' ')]; return q == null ? null : q;
+}
+// Addition forms (Plugs Addition / Finished Addition): everything editable, AppSheet order
+const PLUG_ADD_FIELDS = [
+  F('Choose Plant', 'Choose plant', 'plant', { req: true, src: 'plug' }),
+  E(SIZE_ES, 'Tamaño / size', { req: true, list: 'size' }),
+  F(QTY, 'Quantity (plugs, not flats)', 'num', { req: true }),
+  E('FromContain', 'From container', { list: 'fromContain' }), F('QCell', 'QCell', 'num'),
+  E('Casa / Greenhouse', 'Casa / Greenhouse', { req: true, list: 'greenhouse' }),
+  E('ToContain', 'To container', { list: 'toContain' }), E('Vendor', 'Vendor', { list: 'vendor' }),
+  E('Employee', 'Employee', { req: true, list: 'employee' }),
+  E('Employee 2', 'Employee 2', { list: 'employee', showIf: v => !!v['Employee'] }),
+  F('Notas / Notes', 'Notas / Notes', 'long')
+];
+const FIN_ADD_FIELDS = [
   F('Choose Plant', 'Choose plant', 'plant', { req: true, src: 'item' }),
-  F('Escanear UPC / Scan UPC', 'Escanear UPC / Scan UPC', 'text', { upc: true }),
   F('cantidad / Qty', 'Cantidad / Qty', 'num', { req: true }),
-  F('Casa / Greenhouse', 'Casa / Greenhouse', 'enum', { req: true, list: 'greenhouse' }),
-  F('Notas / Notes', 'Notas / Notes', 'long'),
-  F('Employee', 'Employee', 'enum', { req: true, list: 'employee' }),
-  F('Item Code', 'Item code', 'text', { more: true }),
-  F('Item #', 'Item #', 'text', { more: true }),
-  F('Plant Date', 'Plant date', 'date', { more: true }),
-  F('Size', 'Size', 'enum', { more: true, list: 'size' }),
-  F('Forecast #', 'Forecast #', 'text', { more: true })
+  E('Casa / Greenhouse', 'Casa / Greenhouse', { req: true, list: 'greenhouse' }),
+  E('Plug Location', 'Plug location', { list: 'plugLocation' }), F('QCell', 'QCell', 'num'), E('FromContain', 'From container', { list: 'fromContain' }),
+  E('Employee', 'Employee', { req: true, list: 'employee' }),
+  E('Employee 2', 'Employee 2', { list: 'employee', showIf: v => !!v['Employee'] }),
+  F('Notas / Notes', 'Notas / Notes', 'long')
+];
+// Label forms (GF_*_labels_Form): only plant + quantity are shown; the rest is looked up by Forecast # (client keeps recent values, backend fills the rest)
+const LABEL_QTY_PLUG = QTY, LABEL_QTY_FIN = 'cantidad / Qty';
+const PLUG_LABEL_FIELDS = [F('Choose Plant', 'Plant', 'plant', { ro: true, src: 'plug' }), F(LABEL_QTY_PLUG, 'Quantity', 'num', { req: true }),
+  ...['FromContain', 'Vendor', 'ToContain', 'QCell', 'Goal', 'Plug Type', 'Qty of flats', 'Forecast #', 'Ready Date', 'Assortment', SIZE_ES].map(k => F(k, k, 'text', { hide: true }))];
+const FIN_LABEL_FIELDS = [F('Choose Plant', 'Plant', 'plant', { ro: true, src: 'item' }), F(LABEL_QTY_FIN, 'Quantity', 'num', { req: true }),
+  ...['Size', 'QCell', 'FromContain', 'Goal', 'Ready Date', 'Forecast #', 'Casa / Greenhouse', 'Plug Location', 'Assortment'].map(k => F(k, k, 'text', { hide: true }))];
+// "Empieza" start forms: Choose Plant fixed, only Employee
+const START_FIELDS = [F('Choose Plant', 'Choose plant', 'text', { ro: true }), E('Employee', 'Employee', { req: true, list: 'employee' })];
+const ADD_LABEL_FIELDS = [
+  F('Choose Plant', 'Choose plant', 'plant', { ro: true, src: 'item' }),
+  F('cantidad / Qty', 'Cantidad / Qty', 'num', { req: true }),
+  E('Employee', 'Employee', { list: 'employee' }),
+  ...['Item Code', 'Item #', 'Plant Date', 'Size', 'Forecast #', 'Casa / Greenhouse'].map(k => F(k, k, 'text', { hide: true }))
 ];
 
 export const FORMS = {
   plugPlanting: { title: 'Plug planting record', target: 'gfPlug', fields: PLUG_FIELDS },
-  plugLabels: { title: 'Plug label printing record', target: 'gfPlugLabels', fields: PLUG_FIELDS },
+  plugLabels: { title: 'Plug label printing record', target: 'gfPlugLabels', fields: PLUG_LABEL_FIELDS },
   finPlanting: { title: 'Finished planting record', target: 'gfFin', fields: FIN_FIELDS },
-  finLabels: { title: 'Finished label printing record', target: 'gfFinLabels', fields: FIN_FIELDS },
-  finAddition: { title: 'Planting Finished addition', target: 'gfFin', fields: finAddFields },
+  finLabels: { title: 'Finished label printing record', target: 'gfFinLabels', fields: FIN_LABEL_FIELDS },
+  plugAddition: { title: 'Plugs Addition', target: 'gfPlug', fields: PLUG_ADD_FIELDS },
+  finAddition: { title: 'Finished Addition', target: 'gfFin', fields: FIN_ADD_FIELDS },
+  plugStart: { title: 'Plug planting start', target: 'gfPlug', fields: START_FIELDS },
+  finStart: { title: 'Finished planting start', target: 'gfFin', fields: START_FIELDS },
   addLabels: { title: 'Add labels', target: 'gfAddLabels', fields: ADD_LABEL_FIELDS }
 };
 
@@ -119,8 +127,8 @@ export const PREFILL = {
 export const FORM_DEFAULTS = () => ({ 'Plant Date': todayISO() });
 
 // Ready date = plant date + grow weeks * 7 (PLUGgrow-library: months 4-8 use summer column)
-export function readyDate(L, plant, plantDate) {
-  const g = L.grow.get(String(plant).trim().toLowerCase());
+export function readyDate(L, plant, plantDate, fin) {
+  const g = (fin ? L.growFin : L.grow).get(String(plant).trim().toLowerCase());
   if (!g || !plantDate) return '';
   const mon = Number(plantDate.slice(5, 7));
   const w = (mon >= 4 && mon <= 8) ? g.summer : g.winter;

@@ -10,7 +10,7 @@ export const S = {
   user: LS.get('ctg_user', null), tables: {}, L: emptyL(), seq: 0, queue: LS.get('ctg_q', []), status: 'saved', loaded: false,
   prefs: LS.get('ctg_prefs', { chips: {}, urc: [] }), sent: LS.get('ctg_sent', {}), lastErr: ''
 };
-function emptyL() { return { dd: { byDesc: new Map(), byPlant: new Map(), list: [] }, grow: new Map(), inv: new Map(), lists: {} }; }
+function emptyL() { return { dd: { byDesc: new Map(), byPlant: new Map(), list: [] }, grow: new Map(), growFin: new Map(), ddSize: {}, ddPlant: {}, stock: {}, inv: new Map(), lists: {} }; }
 
 const subs = new Set();
 export const subscribe = f => (subs.add(f), () => subs.delete(f));
@@ -50,6 +50,8 @@ function buildLookups(raw) {
     if (d.p && !L.dd.byPlant.has(norm(d.p))) L.dd.byPlant.set(norm(d.p), d);
   }
   for (const g of raw.grow || []) L.grow.set(norm(g.p), { winter: Number(g.w) || 0, summer: Number(g.s) || 0 });
+  for (const g of raw.growFin || []) L.growFin.set(norm(g.p), { winter: Number(g.w) || 0, summer: Number(g.s) || 0 });
+  L.ddSize = raw.ddSize || {}; L.ddPlant = raw.ddPlant || {}; L.stock = raw.stock || {};
   for (const i of raw.inv || []) L.inv.set(norm(i.code), Number(i.qty) || 0);
   L.lists = raw.lists || {};
   return L;

@@ -151,9 +151,6 @@ function renderDetail() {
   const body = h('div', { class: 'dbody' });
   const acts = (v.actions || []).map(a => ACTIONS[a]).filter(a => a && a.show(r));
   if (acts.length) body.append(h('div', { class: 'actions' }, acts.map(a => h('button', { class: 'btn primary', type: 'button', onclick: () => a.run(r, v) }, a.label))));
-  if ('Planted on App' in r && v.table !== 'flagPlug' && v.table !== 'flagFin')
-    body.append(h('div', { style: 'padding:0 14px 12px' }, h('button', { class: 'tile', role: 'switch', 'aria-checked': !!r['Planted on App'], onclick: () => setFields(v.table, r, { 'Planted on App': !r['Planted on App'] }) },
-      h('span', { text: 'Planted on App' }), h('span', { class: 'sw' }))));
   if (v.video && r._video) body.append(h('div', { class: 'actions' }, h('a', { class: 'btn', href: r._video, target: '_blank', rel: 'noopener' }, 'Watch video')));
   const sect = h('div', { class: 'sect', style: 'margin:0 12px 16px' }, h('h3', { text: 'Details' }));
   for (const c of v.cols) { const val = show(c, r[c]); if (val !== '') sect.append(h('div', { class: 'kv' }, h('span', { text: c }), h('span', { text: val }))); }
@@ -176,12 +173,18 @@ const ACTIONS = {
   reasonPlug: { label: 'Add reason why not planted', show: () => true, run: (r, v) => reasonRun(r, v, 'Plugs audit reason', 'Reason why not flagged', 'reasonPlug') },
   reasonFin: { label: 'Add reason why not planted', show: () => true, run: (r, v) => reasonRun(r, v, 'Finished audit reason', 'Reason why not flagged', 'reasonFin') },
   addLabels: { label: 'Add labels', show: r => !r['Label added'], run: (r, v) => { setFields(v.table, r, { 'Label added': true }); openForm('addLabels', PREFILL.finAddLabels(r, S.L), { sentKey: sentKey(v.table, r, 'l') }); } },
+  startPlug: { label: 'Plug planting start (Empieza)', show: () => true, run: () => openForm('plugStart', { 'Choose Plant': 'Empieza' }, { sentKey: null }) },
+  startFin: { label: 'Finished planting start (Empieza)', show: () => true, run: () => openForm('finStart', { 'Choose Plant': 'Empieza' }, { sentKey: null }) },
+  addPlugs: { label: 'Plugs Addition', show: () => true, run: () => openForm('plugAddition', {}, { sentKey: null }) },
+  addFin: { label: 'Finished Addition', show: () => true, run: () => openForm('finAddition', {}, { sentKey: null }) },
+  setPlanted: { label: 'Set Planted on App', show: r => !r['Planted on App'], run: (r, v) => setFields(v.table, r, { 'Planted on App': true }) },
+  resetPlanted: { label: 'Reset Planted on App', show: r => !!r['Planted on App'], run: (r, v) => setFields(v.table, r, { 'Planted on App': false }) },
   labelsBy: { label: 'Labels added by', show: () => true, run: (r, v) => reasonRun(r, v, 'Label added by', 'Label added by', 'labelBy') }
 };
 function plantRun(r, v) {
   const plug = plugForm(r, v);
   const pre = v.table === 'incoming' ? (plug ? PREFILL.incPlug(r, S.L) : PREFILL.incFin(r, S.L)) : v.table === 'plugPlant' ? PREFILL.plugPlug(r, S.L) : PREFILL.finFin(r, S.L);
-  openForm(plug ? 'plugPlanting' : 'finPlanting', pre, { sentKey: sentKey(v.table, r, 'p') });
+  openForm(plug ? 'plugPlanting' : 'finPlanting', pre, { sentKey: sentKey(v.table, r, 'p'), after: () => setFields(v.table, r, { 'Planted on App': true }) });
 }
 function labelRun(r, v) {
   const plug = plugForm(r, v);
@@ -214,14 +217,17 @@ export function openSheet({ title, fields, values, onSave, form }) {
   const listFor = f => f.src ? plantOptions(f.src) : ((S.L.lists || {})[f.list] || []);
   const mk = f => {
     let ctl;
-    const set = (v, fromUser) => { vals[f.k] = v; if (!fromUser && inputs[f.k] && inputs[f.k].value !== v) inputs[f.k].value = v; changed(f.k); };
+    if (f.ro) {
+      const inp = h('input', { type: 'text', value: vals[f.k] ?? '', disabled: true }); inputs[f.k] = inp; ctl = inp;
+      const fe0 = h('div', { class: 'fld ro' }, h('label', {}, f.label), ctl); flds[f.k] = fe0; return fe0;
+    }
     if (f.type === 'plant' || (f.type === 'enum' && listFor(f).length)) {
-      const t = typeahead(f, vals[f.k], () => listFor(f), (v, u) => { vals[f.k] = v; if (!u) changed(f.k); }); inputs[f.k] = t.inp; ctl = t.wrap;
+      const t = typeahead(f, vals[f.k], () => listFor(f), (v, u) => { vals[f.k] = v; if (!u) changed(f.k); vis(); }); inputs[f.k] = t.inp; ctl = t.wrap;
     } else if (f.type === 'num') {
-      const inp = h('input', { type: 'number', inputmode: 'numeric', value: vals[f.k] ?? '', min: '0' }); inp.addEventListener('input', () => { vals[f.k] = inp.value; });
+      const inp = h('input', { type: 'number', inputmode: 'numeric', value: vals[f.k] ?? '', min: '0' }); inp.addEventListener('input', () => { vals[f.k] = inp.value; vis(); });
       inputs[f.k] = inp; ctl = f.req ? h('div', { class: 'stepper' },
-        h('button', { type: 'button', 'aria-label': 'Less', onclick: () => { inp.value = Math.max(0, Number(inp.value || 0) - 1); vals[f.k] = inp.value; } }, '−'), inp,
-        h('button', { type: 'button', 'aria-label': 'More', onclick: () => { inp.value = Number(inp.value || 0) + 1; vals[f.k] = inp.value; } }, '+')) : inp;
+        h('button', { type: 'button', 'aria-label': 'Less', onclick: () => { inp.value = Math.max(0, Number(inp.value || 0) - 1); vals[f.k] = inp.value; vis(); } }, '−'), inp,
+        h('button', { type: 'button', 'aria-label': 'More', onclick: () => { inp.value = Number(inp.value || 0) + 1; vals[f.k] = inp.value; vis(); } }, '+')) : inp;
     } else if (f.type === 'date') {
       const inp = h('input', { type: 'date', value: vals[f.k] || '' }); inp.addEventListener('input', () => { vals[f.k] = inp.value; changed(f.k); }); inputs[f.k] = inp; ctl = inp;
     } else if (f.type === 'long') {
@@ -235,6 +241,13 @@ export function openSheet({ title, fields, values, onSave, form }) {
     flds[f.k] = fe; return fe;
   };
   const refill = (k, v) => { vals[k] = v; if (inputs[k]) inputs[k].value = v; };
+  const hiddenNow = f => f.showIf ? !f.showIf(vals, S.L) : false;
+  function vis() {
+    for (const f of fields) {
+      if (f.calc) { const c = f.calc(vals, S.L); refill(f.k, c); }
+      if (f.showIf && flds[f.k]) flds[f.k].hidden = hiddenNow(f);
+    }
+  }
   function changed(k) {
     if (!form) return;
     const isItem = form.fields.find(f => f.k === 'Choose Plant')?.src === 'item';
@@ -243,7 +256,7 @@ export function openSheet({ title, fields, values, onSave, form }) {
       if (isItem && d) { if (inputs['Item Code']) refill('Item Code', d.c || ''); if (inputs['Item #']) refill('Item #', d.i || ''); }
     }
     if ((k === 'Choose Plant' || k === 'Plant Date') && inputs['Ready Date'] && !form.userReady) {
-      const rd = readyDate(S.L, vals['Choose Plant'], vals['Plant Date']); if (rd) refill('Ready Date', rd);
+      const rd = readyDate(S.L, vals['Choose Plant'], vals['Plant Date'], isItem); if (rd) refill('Ready Date', rd);
     }
   }
   function upc(code) {
@@ -251,31 +264,42 @@ export function openSheet({ title, fields, values, onSave, form }) {
     const d = S.L.dd.list.find(x => x.b && norm(x.b) === c);
     if (d) { refill('Choose Plant', d.d); changed('Choose Plant'); } else flds['Escanear UPC / Scan UPC']?.classList.add('bad');
   }
-  const main = fields.filter(f => !f.more), more = fields.filter(f => f.more);
+  const main = fields.filter(f => !f.hide), more = [];
   const body = h('div', { class: 'body' }, h('div', { class: 'grp' }, main.map(mk)));
   if (more.length) body.append(h('details', { class: 'grp' }, h('summary', { text: 'More fields' }), more.map(mk)));
   const err = h('p', { class: 'err', style: 'padding:0 14px', role: 'alert' });
   const save = h('button', { class: 'btn primary', type: 'button', onclick: () => {
     for (const f of fields) if (f.type === 'date' && inputs[f.k]) vals[f.k] = inputs[f.k].value;
-    const bad = fields.filter(f => f.req && !String(vals[f.k] ?? '').trim());
+    const bad = fields.filter(f => f.req && !f.ro && !hiddenNow(f) && !String(vals[f.k] ?? '').trim());
     Object.entries(flds).forEach(([k, e]) => e.classList.toggle('bad', bad.some(f => f.k === k)));
     if (bad.length) { err.textContent = 'Please fill: ' + bad.map(f => f.label).join(', '); return; }
-    const out = {}; for (const f of fields) { const v = vals[f.k]; if (v !== '' && v != null) out[f.k] = typeof v === 'string' ? v.trim() : v; }
+    const out = {}; for (const f of fields) { if (hiddenNow(f)) continue; const v = vals[f.k]; if (v !== '' && v != null) out[f.k] = typeof v === 'string' ? v.trim() : v; }
     close(); onSave(out);
   } }, 'Save');
   const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' },
     h('header', {}, h('h2', { text: title }), h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', onclick: close }, '✕')),
     body, err, h('footer', {}, h('button', { class: 'btn', type: 'button', onclick: close }, 'Cancel'), save));
+  vis();
   ov.textContent = ''; ov.append(sheet); ov.hidden = false; document.body.style.overflow = 'hidden';
   ov.onclick = e => { if (e.target === ov) close(); };
   if (form) { const rdi = inputs['Ready Date']; if (rdi) rdi.addEventListener('input', () => { form.userReady = true; }); }
   return close;
 }
+function backToList() {
+  if (view().kind === 'addition') return;
+  U.sel = null; $('#app').classList.remove('phone-detail'); renderList(); renderDetail();
+}
+const RK = 'ctg_recent_fc';
+function recentPut(vals) { try { const fc = vals['Forecast #']; if (!fc) return; const m = JSON.parse(localStorage.getItem(RK) || '{}'); m[fc] = vals; const ks = Object.keys(m); if (ks.length > 60) delete m[ks[0]]; localStorage.setItem(RK, JSON.stringify(m)); } catch (e) { /* ignore */ } }
+function recentGet(fc) { try { return fc ? JSON.parse(localStorage.getItem(RK) || '{}')[fc] : null; } catch (e) { return null; } }
 function openForm(id, prefill, opts = {}) {
   const def = FORMS[id], base = { ...FORM_DEFAULTS(), ...prefill };
   if (def.fields.some(f => f.k === 'Forecast #') && !base['Forecast #']) base['Forecast #'] = nowStamp();
+  if (def.fields.some(f => f.k === 'Size') && !base.Size && base['Choose Plant'] && S.L.ddSize[norm(base['Choose Plant'])]) base.Size = S.L.ddSize[norm(base['Choose Plant'])];
+  if (def.fields.some(f => f.k === 'Ready Date') && !base['Ready Date'] && base['Choose Plant']) { const rd = readyDate(S.L, base['Choose Plant'], base['Plant Date'], def.target === 'gfFin'); if (rd) base['Ready Date'] = rd; }
+  if (def.target === 'gfPlugLabels' || def.target === 'gfFinLabels') Object.assign(base, recentGet(base['Forecast #']) || {}, { 'Choose Plant': base['Choose Plant'] });
   const form = { fields: def.fields, userReady: !!prefill['Ready Date'] };
-  openSheet({ title: def.title, fields: def.fields, values: base, form, onSave: vals => addRecord(def.target, vals, opts.sentKey) });
+  openSheet({ title: def.title, fields: def.fields, values: base, form, onSave: vals => { recentPut(vals); addRecord(def.target, vals, opts.sentKey); if (opts.after) opts.after(); backToList(); } });
 }
 
 // ---------------- chrome ----------------
