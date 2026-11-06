@@ -66,7 +66,7 @@ const REASON = { incoming: 'Reason why not planted', flagPlug: 'Reason why not c
 export const reasonKey = t => REASON[t];
 
 // Views in AppSheet order: 10 primary tabs, then 4 menu tabs.
-export const VIEWS = [
+const ALL_VIEWS = [
   { id: 'incVendors', name: 'Incoming URC/TC', kind: 'vendors' },
   { id: 'urcPrio', name: 'URC Priority', kind: 'urc', table: 'incoming', slice: SLICES.urcPrio, sort: byPrio,
     cols: ['URC Priority', 'Genus', 'Variety', 'Loc', 'Goal', 'Vendor'], sub: ['Vendor', 'Goal', 'Loc'], vendorPicker: true },
@@ -106,4 +106,7 @@ export const VIEWS = [
     cols: ['Size', 'Genus', 'Variety', 'QCell', 'Assortment', 'Plant Date', 'From Contain', 'ToContain', 'Reason why not flagged', 'Plant Week', 'Ready Week', 'Vendor', 'Forecast #', 'Timestamp'],
     sub: ['Plant Date', 'Vendor', 'From Contain'], actions: ['plantPlug', 'reasonPlug'] }
 ];
+// Only the planting tabs are shown (decision 6 Nov). To bring other tabs back, add their ids here.
+export const ENABLED = ['planIncoming', 'planPlugs', 'planFinished', 'plant2in', 'finAddition'];
+export const VIEWS = ALL_VIEWS.filter(v => ENABLED.includes(v.id));
 export const viewById = id => VIEWS.find(v => v.id === id);
