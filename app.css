@@ -49,7 +49,8 @@ button{cursor:pointer}
 .tab svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tab .lb{max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .tab .n{position:absolute;top:4px;left:calc(50% + 6px)}
-.tab[aria-selected=true]{color:var(--spruce);border-top-color:var(--spruce)}
+.tab[aria-selected=true]{color:var(--spruce);border-top-color:var(--spruce);background:var(--spruce-tint);font-weight:800}
+.tab[aria-selected=true] svg{stroke-width:2.6}
 .tab .n{font:700 12px/1 var(--font);padding:4px 7px;border-radius:999px;background:var(--line-2);color:var(--ink-2);min-width:22px;text-align:center}
 .tab[aria-selected=true] .n{background:var(--spruce-tint);color:var(--spruce)}
 .main{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);min-height:0}
