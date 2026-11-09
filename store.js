@@ -7,7 +7,7 @@ const LS = { get(k, d) { try { const v = localStorage.getItem(k); return v == nu
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* ignore */ } } };
 
 export const S = {
-  user: LS.get('ctg_user', null), tables: {}, L: emptyL(), seq: 0, queue: LS.get('ctg_q', []), status: 'saved', loaded: false,
+  user: LS.get('ctg_user', null), tablet: LS.get('ctg_tablet', ''), tables: {}, L: emptyL(), seq: 0, queue: LS.get('ctg_q', []), status: 'saved', loaded: false,
   prefs: LS.get('ctg_prefs', { chips: {}, urc: [] }), sent: LS.get('ctg_sent', {}), lastErr: ''
 };
 function emptyL() { return { dd: { byDesc: new Map(), byPlant: new Map(), list: [] }, grow: new Map(), growFin: new Map(), ddSize: {}, ddPlant: {}, stock: {}, inv: new Map(), lists: {} }; }
@@ -98,6 +98,7 @@ export async function login(name) {
   S.user = { name: res.name, token: res.token }; LS.set('ctg_user', S.user);
   return S.user;
 }
+export const setTablet = e => { S.tablet = e; LS.set('ctg_tablet', e); emit('data'); };
 export function logout() { S.user = null; LS.set('ctg_user', null); S.tables = {}; S.loaded = false; stop(); emit('auth'); }
 
 // ---------- edits ----------
@@ -112,7 +113,7 @@ function enqueue(op) {
 export const setFields = (table, row, patch) => enqueue({ type: 'set', table, key: row._k, patch, ident: ident(table, row) });
 export const flagRow = (table, row) => enqueue({ type: 'flag', table, key: row._k, ident: ident(table, row) });
 export function addRecord(target, values, sentKey) {
-  enqueue({ type: 'add', target, values, by: S.user && S.user.name });
+  enqueue({ type: 'add', target, values, by: S.user && S.user.name, email: S.tablet || '' });
   if (sentKey) { S.sent[sentKey] = Date.now(); LS.set('ctg_sent', S.sent); emit('data'); }
 }
 const ident = (table, r) => table === 'incoming' ? { ID: r.ID } : { Genus: r.Genus, Variety: r.Variety, Size: r.Size, 'Forecast #': r['Forecast #'] };
