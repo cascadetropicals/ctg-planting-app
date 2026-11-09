@@ -4,5 +4,5 @@ export const CONFIG = {
   POLL_SECONDS: 25,
   FULL_RELOAD_SECONDS: 300,
   APP_NAME: 'CTG Planting',
-  VERSION: 'planting-v5'
+  VERSION: 'planting-v6'
 };

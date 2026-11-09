@@ -25,5 +25,19 @@ $('#loginForm').addEventListener('submit', async e => {
 });
 subscribe(w => { if (w === 'auth') showLogin(); });
 document.title = CONFIG.APP_NAME + (isDemo() ? ' (demo)' : '');
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator) {
+  // Always look for a new release: on every open and whenever the app comes back to the foreground (home-screen apps stay alive in the background).
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
+    const check = () => { try { reg.update(); } catch (e) { /* ignore */ } };
+    check(); document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+    setInterval(check, 10 * 60 * 1000);
+  }).catch(() => {});
+  // A new service worker took over = new release: reload once, unless someone is in the middle of a form.
+  let had = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!had) { had = true; return; }
+    const go = () => { if (document.querySelector('#overlay') && !document.querySelector('#overlay').hidden) return setTimeout(go, 3000); location.reload(); };
+    go();
+  });
+}
 if (S.user) enter(); else showLogin();
