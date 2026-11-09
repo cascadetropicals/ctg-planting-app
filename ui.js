@@ -182,7 +182,7 @@ function choose(title, hint, opts) {
 let askedTablet = false;
 export function askTablet(force) {
   const list = (S.L.lists || {}).tabletEmail || []; if (!list.length) return;
-  if (!force) { if (S.tablet || askedTablet) return; askedTablet = true; }
+  if (!force) { if (S.tablet || askedTablet || (S.user && S.user.email)) return; askedTablet = true; }
   choose('Which Google account is this tablet signed in to?', 'Pick it once. It is saved with every record as the Email Address (like AppSheet did).', list.map(e => ({ label: e, run: () => setTablet(e) })));
 }
 function renderVbar() {
@@ -344,7 +344,8 @@ function renderPill() {
 export function openMenu() {
   const m = $('#menu'); m.textContent = '';
   m.append(h('div', { class: 'info', text: 'Signed in as ' + (S.user ? S.user.name : '') }));
-  if (((S.L.lists || {}).tabletEmail || []).length) m.append(h('button', { type: 'button', onclick: () => { m.hidden = true; askTablet(true); } }, 'Tablet account: ' + (S.tablet || 'not set')));
+  if (S.user && S.user.email) m.append(h('div', { class: 'info', text: 'Google account: ' + S.user.email }));
+  else if (((S.L.lists || {}).tabletEmail || []).length) m.append(h('button', { type: 'button', onclick: () => { m.hidden = true; askTablet(true); } }, 'Tablet account: ' + (S.tablet || 'not set')));
   if (S.lastErr) m.append(h('div', { class: 'errl', text: S.lastErr }));
   m.append(h('button', { type: 'button', onclick: () => { m.hidden = true; refreshNow(); } }, 'Refresh now'),
     h('button', { type: 'button', onclick: () => { m.hidden = true; logout(); } }, 'Switch user'));
@@ -352,7 +353,7 @@ export function openMenu() {
   setTimeout(() => document.addEventListener('click', function f(e) { if (!m.contains(e.target)) { m.hidden = true; } document.removeEventListener('click', f); }, { once: true }), 0);
 }
 let rafR = 0;
-function renderAll() { if (S.loaded) setTimeout(() => askTablet(), 300); computeCounts(); renderTabs(); renderChips(); renderList(); renderDetail(); renderPill(); const u = S.user && S.user.name; $('#userInit').textContent = u ? u[0].toUpperCase() : '?'; }
+function renderAll() { computeCounts(); renderTabs(); renderChips(); renderList(); renderDetail(); renderPill(); const u = S.user && S.user.name; $('#userInit').textContent = u ? u[0].toUpperCase() : '?'; }
 export function mount() {
   $('#search').addEventListener('input', e => { U.q = e.target.value; U.limit = 60; $('#clearSearch').hidden = !U.q; renderList(); });
   $('#clearSearch').addEventListener('click', () => { U.q = ''; $('#search').value = ''; $('#clearSearch').hidden = true; renderList(); });

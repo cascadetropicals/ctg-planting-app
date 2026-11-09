@@ -1,7 +1,7 @@
 import { CONFIG } from './config.js';
-import { S, login, loadAll, start, subscribe } from './store.js';
+import { S, login, loadAll, start, subscribe, setTablet } from './store.js';
 import { mount, refreshUI } from './ui.js';
-import { isDemo } from './api.js';
+import { isDemo, call } from './api.js';
 
 const $ = s => document.querySelector(s);
 let mounted = false;
@@ -19,11 +19,37 @@ function showLogin(msg) {
 }
 $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault(); const go = $('#loginGo'); go.disabled = true; $('#loginErr').textContent = '';
-  try { await login($('#loginName').value); await enter(); }
+  try { if (!$('#tabRow').hidden) setTablet($('#loginTab').value); await login($('#loginName').value); await enter(); }
   catch (er) { $('#loginErr').textContent = er.net ? 'No connection. Try again.' : (er.message || 'Could not sign in'); }
   go.disabled = false;
 });
+// Google sign-in (like AppSheet): shown only when the backend has a Client ID configured.
+async function setupGoogle() {
+  if (isDemo()) return;
+  try {
+    const cfg = await call('cfg');
+    if (cfg && !cfg.googleClientId && (cfg.tabletEmail || []).length) { // no Google sign-in set up: pick this tablet's account on the start page
+      const sel = $('#loginTab'); sel.textContent = '';
+      const ph = document.createElement('option'); ph.value = ''; ph.textContent = 'Choose account…'; sel.append(ph);
+      for (const e of cfg.tabletEmail) { const o = document.createElement('option'); o.value = e; o.textContent = e; sel.append(o); }
+      sel.value = S.tablet && cfg.tabletEmail.includes(S.tablet) ? S.tablet : ''; sel.required = true; $('#tabRow').hidden = false;
+      return;
+    }
+    if (!cfg || !cfg.googleClientId) return;
+    await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = ok; s.onerror = no; document.head.append(s); });
+    window.google.accounts.id.initialize({ client_id: cfg.googleClientId, auto_select: false, cancel_on_tap_outside: false, callback: async r => {
+      const name = $('#loginName').value.trim();
+      if (!name) { $('#loginErr').textContent = 'Please enter your name first, then sign in with Google.'; return; }
+      $('#loginErr').textContent = '';
+      try { await login(name, r.credential); await enter(); }
+      catch (er) { $('#loginErr').textContent = er.net ? 'No connection. Try again.' : (er.message || 'Could not sign in'); }
+    } });
+    window.google.accounts.id.renderButton($('#gbtn'), { theme: 'filled_blue', size: 'large', text: 'signin_with', width: 280 });
+    $('#gbox').hidden = false; $('#loginGo').hidden = true;
+  } catch (e) { /* no connection or blocked: keep the name-only login */ }
+}
 subscribe(w => { if (w === 'auth') showLogin(); });
+setupGoogle();
 document.title = CONFIG.APP_NAME + (isDemo() ? ' (demo)' : '');
 if ('serviceWorker' in navigator) {
   // Always look for a new release: on every open and whenever the app comes back to the foreground (home-screen apps stay alive in the background).

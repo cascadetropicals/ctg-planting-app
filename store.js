@@ -92,10 +92,10 @@ export async function loadAll() {
 }
 
 // ---------- auth ----------
-export async function login(name) {
-  const res = await api.call('login', { name });
+export async function login(name, idToken) {
+  const res = await api.call('login', { name, idToken });
   if (res.error) throw new Error(res.error);
-  S.user = { name: res.name, token: res.token }; LS.set('ctg_user', S.user);
+  S.user = { name: res.name, token: res.token, email: res.email || '' }; LS.set('ctg_user', S.user);
   return S.user;
 }
 export const setTablet = e => { S.tablet = e; LS.set('ctg_tablet', e); emit('data'); };

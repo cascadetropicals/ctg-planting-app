@@ -46,8 +46,10 @@
     <div class="logo big" aria-hidden="true"></div>
     <h2>CTG Planting</h2>
     <label>Your name<input id="loginName" required maxlength="40" autocomplete="name" placeholder="e.g. Maria"></label>
+    <label id="tabRow" hidden>Google account of this tablet<select id="loginTab"></select></label>
     <label id="codeRow" hidden>Access code<input id="loginCode" type="password" autocomplete="off" inputmode="text"></label>
     <p id="loginErr" class="err" role="alert"></p>
+    <div id="gbox" hidden><p class="hint" style="margin:0 0 10px">Enter your name, then sign in with the Google account of this tablet.</p><div id="gbtn" style="display:flex;justify-content:center"></div></div>
     <button class="btn primary" type="submit" id="loginGo">Continue</button>
   </form>
 </div>
