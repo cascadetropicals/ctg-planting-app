@@ -164,3 +164,13 @@ button{cursor:pointer}
 .more{margin:4px 14px 12px}.more summary{padding:10px 2px;color:var(--ink-2);font-weight:600;cursor:pointer}
 .more .actions{padding:6px 0}
 .choice{margin-bottom:12px}.hint{color:var(--ink-2);margin:0 0 14px}
+
+#toast{position:fixed;left:12px;right:12px;bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom));z-index:60;background:var(--spruce);color:var(--on-spruce);font-weight:700;padding:14px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transform:translateY(12px);pointer-events:none;transition:.2s}
+#toast.on{opacity:1;transform:none}
+
+.btn.emp{flex-direction:column;gap:2px;line-height:1.15;padding:6px 12px}.btn.emp small{font-weight:600;font-size:12px;opacity:.9}
+.btn.emp.warn{background:#b45309;border-color:#b45309;color:#fff}
+
+#lunchAlert{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:20px}
+#lunchAlert .box{background:var(--surface);border-radius:20px;padding:24px 20px;width:100%;max-width:420px;display:grid;gap:12px;text-align:center}
+#lunchAlert .big.btn{width:100%}#lunchAlert div.big{font-size:44px}#lunchAlert h2{margin:0}#lunchAlert p{margin:0;color:var(--ink-2)}

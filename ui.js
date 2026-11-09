@@ -179,6 +179,55 @@ function choose(title, hint, opts) {
     h('div', { class: 'body' }, hint ? h('p', { class: 'hint', text: hint }) : null, opts.map(o => h('button', { class: 'btn primary big choice', type: 'button', onclick: () => { close(); o.run(); } }, o.label))));
   ov.textContent = ''; ov.append(sheet); ov.hidden = false; document.body.style.overflow = 'hidden'; ov.onclick = e => { if (e.target === ov) close(); };
 }
+// One tap: saves Empieza with the logged-in name (Employee) and email; no form.
+// Last time is remembered per user and kind on this device; the buttons show it ("not yet today" otherwise).
+const EK = 'ctg_empieza';
+const empGet = () => { try { return JSON.parse(localStorage.getItem(EK) || '{}'); } catch (e) { return {}; } };
+const empLast = kind => { const t = (empGet()[(S.user && S.user.name || '') + '|' + kind]) || 0; return t; };
+const sameDay = t => t && new Date(t).toDateString() === new Date().toDateString();
+const hhmm = t => { const d = new Date(t); return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); };
+const empStatus = kind => { const t = empLast(kind); return sameDay(t) ? '✓ ' + hhmm(t) : 'not yet today'; };
+const ago = t => { const m = Math.max(1, Math.round((Date.now() - t) / 60000)); return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min'; };
+function toast(msg) {
+  let t = document.querySelector('#toast'); if (!t) { t = h('div', { id: 'toast', role: 'status' }); document.body.append(t); }
+  t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 4000);
+}
+function empieza(kind) {
+  const label = kind === 'plug' ? 'Plugs' : 'Finished', last = empLast(kind);
+  const go = () => {
+    addRecord(kind === 'plug' ? 'gfPlug' : 'gfFin', { 'Choose Plant': 'Empieza', Employee: S.user.name }, null);
+    const m = empGet(); m[(S.user.name || '') + '|' + kind] = Date.now(); try { localStorage.setItem(EK, JSON.stringify(m)); } catch (e) { /* ignore */ }
+    toast('✓ Empieza ' + label + ' saved – ' + S.user.name + ' ' + hhmm(Date.now())); renderVbar();
+  };
+  if (last && Date.now() - last < 3 * 3600 * 1000) choose('Empieza ' + label + ' – submit again?', 'You already submitted Empieza ' + label + ' ' + ago(last) + ' ago (at ' + hhmm(last) + '). Are you sure you want to submit again?', [{ label: 'Yes, submit again', run: go }, { label: 'No, cancel', run: () => {} }]);
+  else go();
+}
+// Lunch alert: from 12:40 Pacific time, until someone taps Empieza (plugs or finished) after 12:40. Only while the app is open.
+const ALERT_FROM = 12 * 60 + 40, ALERT_TO = 17 * 60; // minutes after midnight, Pacific
+const pt = t => { const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(t)).map(x => [x.type, x.value])); return { day: p.year + p.month + p.day, min: Number(p.hour) * 60 + Number(p.minute) }; };
+let snoozeUntil = 0;
+// Returns 'start' (no Empieza yet today, e.g. right after signing in), 'lunch' (none since 12:40 PT) or '' (nothing to show).
+function empDue() {
+  if (!S.user || !S.loaded || Date.now() < snoozeUntil) return '';
+  const n = pt(Date.now()), ts = ['plug', 'fin'].map(empLast).filter(Boolean).map(pt).filter(l => l.day === n.day);
+  if (!ts.length) return 'start';
+  if (n.min < ALERT_FROM || n.min >= ALERT_TO) return '';
+  return ts.some(l => l.min >= ALERT_FROM) ? '' : 'lunch';
+}
+function checkLunch() {
+  const ex = document.querySelector('#lunchAlert'), due = empDue();
+  if (!due) { if (ex) ex.remove(); return; }
+  if (ex || !$('#overlay').hidden) return; // already showing, or someone is filling in a form: try again in 30 s
+  const close = () => document.querySelector('#lunchAlert')?.remove();
+  const doIt = k => () => { close(); empieza(k); };
+  const el = h('div', { id: 'lunchAlert', role: 'alertdialog', 'aria-modal': 'true' },
+    h('div', { class: 'box' }, h('div', { class: 'big', text: due === 'start' ? '🌱' : '🍽️' }), h('h2', { text: due === 'start' ? 'Starting work?' : 'Back from lunch?' }),
+      h('p', { text: due === 'start' ? 'Tap Empieza now to start your day, so your work time is recorded correctly.' : 'Tap Empieza now, so your work time is recorded correctly.' }),
+      h('button', { class: 'btn primary big', type: 'button', onclick: doIt('plug') }, 'Plugs – Empieza'),
+      h('button', { class: 'btn primary big', type: 'button', onclick: doIt('fin') }, 'Finished – Empieza'),
+      h('button', { class: 'btn', type: 'button', onclick: () => { snoozeUntil = Date.now() + 10 * 60000; close(); } }, due === 'start' ? 'Not yet – remind me in 10 min' : 'Not back yet – remind me in 10 min')));
+  document.body.append(el); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) { /* ignore */ }
+}
 let askedTablet = false;
 export function askTablet(force) {
   const list = (S.L.lists || {}).tabletEmail || []; if (!list.length) return;
@@ -187,9 +236,14 @@ export function askTablet(force) {
 }
 function renderVbar() {
   const bar = $('#vbar'), cfg = VBAR[view().id]; bar.textContent = ''; bar.hidden = !cfg; if (!cfg) return;
-  const START = { plug: { label: 'Plugs – Empieza', run: () => openForm('plugStart', { 'Choose Plant': 'Empieza' }, { sentKey: null }) }, fin: { label: 'Finished – Empieza', run: () => openForm('finStart', { 'Choose Plant': 'Empieza' }, { sentKey: null }) } };
+  const KL = { plug: 'Plugs', fin: 'Finished' };
+  const START = { plug: { label: 'Plugs – Empieza  (' + empStatus('plug') + ')', run: () => empieza('plug') }, fin: { label: 'Finished – Empieza  (' + empStatus('fin') + ')', run: () => empieza('fin') } };
   const ADD = { plug: { label: 'Plugs Addition', run: () => openForm('plugAddition', {}, { sentKey: null }) }, fin: { label: 'Finished Addition', run: () => openForm('finAddition', {}, { sentKey: null }) } };
-  if (cfg.start) bar.append(h('button', { class: 'btn primary', type: 'button', onclick: () => cfg.start.length === 1 ? START[cfg.start[0]].run() : choose('Empieza – start work', 'Tap this every time you start again: morning, after break, lunch, pulling or other work.', cfg.start.map(k => START[k])) }, 'Empieza'));
+  if (cfg.start) {
+    const st = cfg.start.map(k => KL[k] + ' ' + empStatus(k)).join(' · '), ok = cfg.start.every(k => sameDay(empLast(k)));
+    bar.append(h('button', { class: 'btn primary emp' + (ok ? '' : ' warn'), type: 'button', onclick: () => cfg.start.length === 1 ? START[cfg.start[0]].run() : choose('Empieza – start work', 'Tap this every time you start again: morning, after break, lunch, pulling or other work. It is saved right away with your name.', cfg.start.map(k => START[k])) },
+      h('b', { text: 'Empieza' }), h('small', { text: st })));
+  }
   if (cfg.add) bar.append(h('button', { class: 'btn', type: 'button', onclick: () => choose('Add a planting record', 'For plants that are not in the list.', cfg.add.map(k => ADD[k])) }, '+ Addition'));
 }
 
@@ -327,6 +381,7 @@ function recentGet(fc) { try { return fc ? JSON.parse(localStorage.getItem(RK) |
 function openForm(id, prefill, opts = {}) {
   const def = FORMS[id], base = { ...FORM_DEFAULTS(), ...prefill };
   if (def.fields.some(f => f.k === 'Forecast #') && !base['Forecast #']) base['Forecast #'] = nowStamp();
+  if (def.fields.some(f => f.k === 'Employee') && !base.Employee && S.user) base.Employee = S.user.name; // logged-in name pre-entered
   if (def.fields.some(f => f.k === 'Size') && !base.Size && base['Choose Plant'] && S.L.ddSize[norm(base['Choose Plant'])]) base.Size = S.L.ddSize[norm(base['Choose Plant'])];
   if (def.fields.some(f => f.k === 'Ready Date') && !base['Ready Date'] && base['Choose Plant']) { const rd = readyDate(S.L, base['Choose Plant'], base['Plant Date'], def.target === 'gfFin'); if (rd) base['Ready Date'] = rd; }
   if (def.target === 'gfPlugLabels' || def.target === 'gfFinLabels') Object.assign(base, recentGet(base['Forecast #']) || {}, { 'Choose Plant': base['Choose Plant'] });
@@ -369,5 +424,7 @@ export function mount() {
     });
   });
   renderAll();
+  setTimeout(checkLunch, 1500); // right after signing in / opening the app
+  setInterval(checkLunch, 30000); document.addEventListener('visibilitychange', () => { if (!document.hidden) checkLunch(); }); window.__lunchCheck = checkLunch;
 }
 export const refreshUI = () => renderAll();
