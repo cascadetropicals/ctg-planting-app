@@ -72,7 +72,7 @@ const ALL_VIEWS = [
     cols: ['URC Priority', 'Genus', 'Variety', 'Loc', 'Goal', 'Vendor'], sub: ['Vendor', 'Goal', 'Loc'], vendorPicker: true },
   { id: 'planIncoming', name: 'Planting Incoming URC/TC', table: 'incoming', slice: SLICES.planIncoming, sort: byPlantedGenus,
     cols: ['Size', 'Genus', 'Variety', 'Goal', 'QCell', 'Qty of flats', 'From Contain', 'Vendor', 'ToContain', 'Incoming Week', 'Plant Date', 'Reason why not planted', 'Plant Week', 'Ready Week', 'Forecast #', 'Timestamp'],
-    sub: ['Vendor', 'Goal', 'From Contain', 'Plant Date'], actions: ['plantInc', 'labelInc', 'startPlug', 'startFin', 'addPlugs', 'addFin', 'reasonInc', 'setPlanted', 'resetPlanted'], video: true },
+    sub: ['Vendor', 'Goal', 'From Contain', 'Plant Date'], actions: ['plantInc', 'labelInc', 'reasonInc', 'setPlanted', 'resetPlanted'], video: true },
   { id: 'incAudit', name: 'Incoming Audit', table: 'incoming', slice: SLICES.incAudit, sort: byPlantedGenus,
     cols: ['Size', 'Genus', 'Variety', 'Goal', 'QCell', 'Qty of flats', 'From Contain', 'Vendor', 'ToContain', 'Incoming Week', 'Plant Date', 'Reason why not planted', 'Plant Week', 'Ready Week', 'Forecast #', 'Timestamp'],
     sub: ['Vendor', 'Goal', 'From Contain', 'Plant Date'], actions: ['plantInc', 'reasonInc'] },
@@ -81,13 +81,13 @@ const ALL_VIEWS = [
     sub: ['Goal', 'Plant Date', 'Vendor'], actions: ['flagPlug'] },
   { id: 'planPlugs', name: 'Planting Plugs', table: 'plugPlant', slice: SLICES.planPlugs, sort: byPlantedGenus,
     cols: ['Size', 'Genus', 'Variety', 'Location', 'QCell', 'Assortment', 'Plant Date', 'From Contain', 'ToContain', 'Reason why not flagged', 'Plant Week', 'Ready Week', 'Vendor', 'Forecast #', 'Timestamp'],
-    sub: ['Location', 'Plant Date', 'Vendor'], actions: ['plantPlug', 'labelPlug', 'startPlug', 'reasonPlug', 'setPlanted', 'resetPlanted'], video: true },
+    sub: ['Location', 'Plant Date', 'Vendor'], actions: ['plantPlug', 'labelPlug', 'reasonPlug', 'setPlanted', 'resetPlanted'], video: true },
   { id: 'flagFinished', name: 'Flagging Finished', table: 'flagFin', slice: () => true, sort: byTransGenus,
     cols: ['Size', 'Genus', 'Variety', 'Plug Location', 'QCell', 'Goal', 'Plant Date', 'From Contain', 'Plant Week', 'Ready Week', 'Forecast #', 'Timestamp', 'Reason why not checked'],
     sub: ['Plug Location', 'Goal', 'Plant Date'], actions: ['flagFin'] },
   { id: 'planFinished', name: 'Planting Finished 2', table: 'finPlant', slice: SLICES.planFinished, sort: byPlantedGenus, chips: 'finished',
     cols: ['Size', 'Genus', 'Variety', 'HB', 'Goal', 'QCell', 'Assortment', 'Location', 'Plug Location', 'Plant Week', 'Plant Date', 'From Contain', 'Reason why not flagged', 'Ready Week', 'Forecast #', 'Timestamp'],
-    sub: ['Location', 'Plant Date', 'Goal'], actions: ['plantFin', 'labelFin', 'startFin', 'addFin', 'reasonFin', 'setPlanted', 'resetPlanted'] },
+    sub: ['Location', 'Plant Date', 'Goal'], actions: ['plantFin', 'labelFin', 'reasonFin', 'setPlanted', 'resetPlanted'] },
   { id: 'plant2in', name: '2in Planting', table: 'finPlant', slice: SLICES.plant2in, sort: byPlantedGenus, chips: 'twoIn',
     cols: ['Size', 'Genus', 'Variety', 'Goal', 'QCell', 'Assortment', 'Location', 'Plug Location', 'Plant Week', 'Plant Date', 'From Contain', 'Reason why not flagged', 'Ready Week', 'Forecast #', 'Timestamp'],
     sub: ['Location', 'Plant Date', 'Goal'], actions: ['plantFin', 'labelFin', 'setPlanted', 'resetPlanted'] },
@@ -107,6 +107,8 @@ const ALL_VIEWS = [
     sub: ['Plant Date', 'Vendor', 'From Contain'], actions: ['plantPlug', 'reasonPlug'] }
 ];
 // Only the planting tabs are shown (decision 6 Nov). To bring other tabs back, add their ids here.
+// view-level buttons (like AppSheet's Add buttons): start = Empieza chooser, add = additions
+export const VBAR = { planIncoming: { start: ['plug', 'fin'], add: ['plug', 'fin'] }, planPlugs: { start: ['plug'] }, planFinished: { start: ['fin'] }, plant2in: { start: ['fin'] } };
 export const ENABLED = ['planIncoming', 'planPlugs', 'planFinished', 'plant2in', 'finAddition'];
 export const VIEWS = ALL_VIEWS.filter(v => ENABLED.includes(v.id));
 export const viewById = id => VIEWS.find(v => v.id === id);

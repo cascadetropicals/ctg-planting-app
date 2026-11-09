@@ -1,6 +1,6 @@
 // Rendering: tabs, list (windowed), detail pane, form sheet, menu.
 import { S, subscribe, context, setFields, flagRow, addRecord, chipOn, toggleChip, setPref, plantOptions, logout, refreshNow } from './store.js';
-import { VIEWS, viewById, CHIPS, isPlugSize, reasonKey } from './views.js';
+import { VIEWS, VBAR, viewById, CHIPS, isPlugSize, reasonKey } from './views.js';
 import { FORMS, PREFILL, FORM_DEFAULTS, readyDate } from './forms.js';
 import { fmtDate, fmtDateTime, fmtNum, norm, esc, nowStamp } from './format.js';
 
@@ -116,11 +116,13 @@ function renderList() {
   U.rows = compute(v);
   $('#viewhead').textContent = '';
   if (v.kind === 'addition') {
+    $('#vbar').hidden = true;
     $('#viewhead').append(h('span', { text: 'Add a finished planting record' }));
     list.append(h('div', { class: 'empty' }, h('b', { text: 'New finished planting' }), h('p', { text: 'Record plants you planted that are not on the list.' }),
       h('button', { class: 'btn primary', type: 'button', onclick: () => openForm('finAddition', FORM_DEFAULTS(), { sentKey: null }) }, 'Add record')));
     $('#searchbar').hidden = true; return;
   }
+  renderVbar();
   $('#searchbar').hidden = v.kind === 'vendors';
   $('#viewhead').append(h('span', { text: v.name }), h('span', { text: fmtNum(U.rows.length) + (U.rows.length === 1 ? ' item' : ' items') }));
   if (!S.loaded) { list.append(h('div', { class: 'empty' }, h('b', { text: 'Loading…' }))); return; }
@@ -157,12 +159,31 @@ function renderDetail() {
     h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Back', onclick: () => { U.sel = null; $('#app').classList.remove('phone-detail'); renderList(); renderDetail(); } }, '←'),
     h('div', { class: 'ttl' }, ((r.Genus || '') + ' ' + (r.Variety || '')).trim(), h('small', { text: [r.Size, r.Vendor || r.Location].filter(Boolean).join(' · ') }))));
   const body = h('div', { class: 'dbody' });
-  const acts = (v.actions || []).map(a => ACTIONS[a]).filter(a => a && a.show(r));
-  if (acts.length) body.append(h('div', { class: 'actions' }, acts.map(a => h('button', { class: 'btn primary', type: 'button', onclick: () => a.run(r, v) }, a.label))));
+    const MAIN = ['plantInc', 'labelInc', 'plantPlug', 'labelPlug', 'plantFin', 'labelFin', 'flagPlug', 'flagFin', 'addLabels'];
+  const keys = (v.actions || []).filter(k => ACTIONS[k] && ACTIONS[k].show(r));
+  const main = keys.filter(k => MAIN.includes(k)), more = keys.filter(k => !MAIN.includes(k));
+  if (main.length) body.append(h('div', { class: 'actions main' }, main.map(k => h('button', { class: 'btn primary big', type: 'button', onclick: () => ACTIONS[k].run(r, v) }, ACTIONS[k].label))));
+  if (more.length) body.append(h('details', { class: 'more' }, h('summary', { text: 'More actions' }), h('div', { class: 'actions' }, more.map(k => h('button', { class: 'btn', type: 'button', onclick: () => ACTIONS[k].run(r, v) }, ACTIONS[k].label)))));
   if (v.video && r._video) body.append(h('div', { class: 'actions' }, h('a', { class: 'btn', href: r._video, target: '_blank', rel: 'noopener' }, 'Watch video')));
   const sect = h('div', { class: 'sect', style: 'margin:0 12px 16px' }, h('h3', { text: 'Details' }));
   for (const c of v.cols) { const val = show(c, r[c]); if (val !== '') sect.append(h('div', { class: 'kv' }, h('span', { text: c }), h('span', { text: val }))); }
   body.append(sect); d.append(body);
+}
+
+// ---------------- view-level buttons (Empieza, Additions) ----------------
+function choose(title, hint, opts) {
+  const ov = $('#overlay'), close = () => { ov.hidden = true; ov.textContent = ''; document.body.style.overflow = ''; };
+  const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' },
+    h('header', {}, h('h2', { text: title }), h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', onclick: close }, '✕')),
+    h('div', { class: 'body' }, hint ? h('p', { class: 'hint', text: hint }) : null, opts.map(o => h('button', { class: 'btn primary big choice', type: 'button', onclick: () => { close(); o.run(); } }, o.label))));
+  ov.textContent = ''; ov.append(sheet); ov.hidden = false; document.body.style.overflow = 'hidden'; ov.onclick = e => { if (e.target === ov) close(); };
+}
+function renderVbar() {
+  const bar = $('#vbar'), cfg = VBAR[view().id]; bar.textContent = ''; bar.hidden = !cfg; if (!cfg) return;
+  const START = { plug: { label: 'Plugs – Empieza', run: () => openForm('plugStart', { 'Choose Plant': 'Empieza' }, { sentKey: null }) }, fin: { label: 'Finished – Empieza', run: () => openForm('finStart', { 'Choose Plant': 'Empieza' }, { sentKey: null }) } };
+  const ADD = { plug: { label: 'Plugs Addition', run: () => openForm('plugAddition', {}, { sentKey: null }) }, fin: { label: 'Finished Addition', run: () => openForm('finAddition', {}, { sentKey: null }) } };
+  if (cfg.start) bar.append(h('button', { class: 'btn primary', type: 'button', onclick: () => cfg.start.length === 1 ? START[cfg.start[0]].run() : choose('Empieza – start work', 'Tap this every time you start again: morning, after break, lunch, pulling or other work.', cfg.start.map(k => START[k])) }, 'Empieza'));
+  if (cfg.add) bar.append(h('button', { class: 'btn', type: 'button', onclick: () => choose('Add a planting record', 'For plants that are not in the list.', cfg.add.map(k => ADD[k])) }, '+ Addition'));
 }
 
 // ---------------- actions ----------------
@@ -181,10 +202,6 @@ const ACTIONS = {
   reasonPlug: { label: 'Add reason why not planted', show: () => true, run: (r, v) => reasonRun(r, v, 'Plugs audit reason', 'Reason why not flagged', 'reasonPlug') },
   reasonFin: { label: 'Add reason why not planted', show: () => true, run: (r, v) => reasonRun(r, v, 'Finished audit reason', 'Reason why not flagged', 'reasonFin') },
   addLabels: { label: 'Add labels', show: r => !r['Label added'], run: (r, v) => { setFields(v.table, r, { 'Label added': true }); openForm('addLabels', PREFILL.finAddLabels(r, S.L), { sentKey: sentKey(v.table, r, 'l') }); } },
-  startPlug: { label: 'Plug planting start (Empieza)', show: () => true, run: () => openForm('plugStart', { 'Choose Plant': 'Empieza' }, { sentKey: null }) },
-  startFin: { label: 'Finished planting start (Empieza)', show: () => true, run: () => openForm('finStart', { 'Choose Plant': 'Empieza' }, { sentKey: null }) },
-  addPlugs: { label: 'Plugs Addition', show: () => true, run: () => openForm('plugAddition', {}, { sentKey: null }) },
-  addFin: { label: 'Finished Addition', show: () => true, run: () => openForm('finAddition', {}, { sentKey: null }) },
   setPlanted: { label: 'Set Planted on App', show: r => !r['Planted on App'], run: (r, v) => setFields(v.table, r, { 'Planted on App': true }) },
   resetPlanted: { label: 'Reset Planted on App', show: r => !!r['Planted on App'], run: (r, v) => setFields(v.table, r, { 'Planted on App': false }) },
   labelsBy: { label: 'Labels added by', show: () => true, run: (r, v) => reasonRun(r, v, 'Label added by', 'Label added by', 'labelBy') }
