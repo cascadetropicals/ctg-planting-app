@@ -50,14 +50,22 @@ function computeCounts() {
 }
 
 // ---------------- tabs ----------------
+const TAB_UI = {
+  planIncoming: ['Incoming', '<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'],
+  planPlugs: ['Plugs', '<path d="M12 21v-8"/><path d="M12 13c-4 0-6-2-6-6 4 0 6 2 6 6z"/><path d="M12 15c0-3 2-5 6-5 0 4-2 5-6 5z"/>'],
+  planFinished: ['Finished', '<path d="M6 11h12l-1.5 9h-9z"/><path d="M12 11V5"/><path d="M12 8c-3 0-4-2-4-4 3 0 4 1 4 4zM12 8c0-2 1-3 4-3 0 2-1 3-4 3z"/>'],
+  plant2in: ['2in', '<path d="M7 12h10l-1 7H8z"/><path d="M12 12V7"/><path d="M12 9c-2 0-3-1-3-3 2 0 3 1 3 3z"/>'],
+  finAddition: ['Addition', '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>']
+};
 function renderTabs() {
   const nav = $('#tabs'); nav.textContent = '';
-  VIEWS.forEach((v, i) => {
-    const b = h('button', { class: 'tab' + (v.menu && !VIEWS[i - 1].menu ? ' sep' : ''), role: 'tab', 'aria-selected': v.id === U.view, 'data-id': v.id, onclick: () => go(v.id) },
-      v.name, U.counts[v.id] != null ? h('span', { class: 'n', text: fmtNum(U.counts[v.id]) }) : null);
+  VIEWS.forEach(v => {
+    const ui = TAB_UI[v.id] || [v.name, '<circle cx="12" cy="12" r="8"/>'];
+    const ico = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); ico.setAttribute('viewBox', '0 0 24 24'); ico.setAttribute('aria-hidden', 'true'); ico.innerHTML = ui[1];
+    const b = h('button', { class: 'tab', role: 'tab', 'aria-selected': v.id === U.view, 'aria-label': v.name, title: v.name, 'data-id': v.id, onclick: () => go(v.id) },
+      ico, h('span', { class: 'lb', text: ui[0] }), U.counts[v.id] != null ? h('span', { class: 'n', text: fmtNum(U.counts[v.id]) }) : null);
     nav.append(b);
   });
-  const sel = nav.querySelector('[aria-selected=true]'); if (sel) sel.scrollIntoView({ inline: 'center', block: 'nearest' });
 }
 function go(id) {
   U.view = id; U.sel = null; U.q = ''; U.limit = 60; $('#search').value = ''; $('#clearSearch').hidden = true;
