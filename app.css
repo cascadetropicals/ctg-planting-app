@@ -190,7 +190,13 @@ button{cursor:pointer}
 .sheet .fld select{appearance:auto}
 .sheet .fld textarea{min-height:48px}
 
-.whoami{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:6px 14px;background:var(--surface);border-bottom:1px solid var(--line);font-size:14px}
-.whoami b{font-weight:700}.whoami span{color:var(--ink-2);overflow-wrap:anywhere}.whoami .warn{color:var(--red)}
-
-.row .quick{flex:0 0 auto;min-height:44px;padding:0 14px;font-size:14px;white-space:nowrap}
+.brand{min-width:0}
+.bt{min-width:0;display:flex;flex-direction:column;gap:3px}
+.whoami{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.whoami b{font:700 15px/1.15 var(--display)}
+.whoami span{font-size:12px;opacity:.9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.whoami .warn{color:#ffd7d0;font-weight:700}
+@media (max-width:640px){.brand h1{display:none}.whoami b{font-size:17px}.whoami span{font-size:13px}}
+.brand{flex:1 1 0}.top-r{flex:0 0 auto}.pill{white-space:nowrap}
+.app{grid-template-columns:minmax(0,1fr)}@media (max-width:640px){.pill{padding:0 10px}.top{gap:8px}}
+@media (max-width:640px){.pill:not(.saving):not(.offline):not(.err) #pillText{display:none}.pill:not(.saving):not(.offline):not(.err){padding:0 12px}}
