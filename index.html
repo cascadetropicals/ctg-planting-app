@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -17,16 +17,17 @@
     <div class="brand"><span class="logo" aria-hidden="true"></span><h1>CTG Planting</h1></div>
     <div class="top-r">
       <button id="pill" class="pill" type="button" aria-live="polite"><span class="dot"></span><span id="pillText">Saved</span></button>
-      <button id="syncBtn" class="icon-btn" type="button" aria-label="Refresh"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
-      <button id="userBtn" class="icon-btn user" type="button" aria-label="User menu"><span id="userInit">?</span></button>
+      <button id="syncBtn" class="icon-btn" type="button" aria-label="Refresh" data-ta="Refresh"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
+      <button id="userBtn" class="icon-btn user" type="button" aria-label="User menu" data-ta="User menu"><span id="userInit">?</span></button>
     </div>
   </header>
+  <div class="whoami" id="whoami" aria-live="polite"></div>
   <div class="main" id="main">
     <section class="listpane" id="listpane">
       <div class="searchbar" id="searchbar">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-        <input id="search" type="search" inputmode="search" autocomplete="off" placeholder="Search" aria-label="Search">
-        <button id="clearSearch" class="icon-btn sm" type="button" aria-label="Clear" hidden>✕</button>
+        <input id="search" type="search" inputmode="search" autocomplete="off" placeholder="Search" data-tp="Search" aria-label="Search" data-ta="Search">
+        <button id="clearSearch" class="icon-btn sm" type="button" aria-label="Clear" data-ta="Clear" hidden>✕</button>
       </div>
       <div class="chips" id="chips" hidden></div>
       <div class="viewhead" id="viewhead"></div>
@@ -35,7 +36,7 @@
     </section>
     <section class="detailpane" id="detailpane" aria-live="polite"></section>
   </div>
-  <nav class="tabs" id="tabs" role="tablist" aria-label="Views"></nav>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Views" data-ta="Views"></nav>
 </div>
 
 <div id="overlay" class="overlay" hidden></div>
@@ -45,12 +46,13 @@
   <form class="card" id="loginForm" autocomplete="off">
     <div class="logo big" aria-hidden="true"></div>
     <h2>CTG Planting</h2>
-    <label>Your name<input id="loginName" required maxlength="40" autocomplete="name" placeholder="e.g. Maria"></label>
-    <label id="tabRow" hidden>Google account of this tablet<select id="loginTab"></select></label>
-    <label id="codeRow" hidden>Access code<input id="loginCode" type="password" autocomplete="off" inputmode="text"></label>
+    <div class="langsw" role="group" aria-label="Language" data-ta="Language"><button type="button" data-lang="es" aria-pressed="true">Español</button><button type="button" data-lang="en" aria-pressed="false">English</button></div>
+    <label><span data-t="Your name">Your name</span><input id="loginName" required maxlength="40" autocomplete="name" placeholder="e.g. Maria" data-tp="e.g. Maria"></label>
+    <label id="tabRow" hidden><span data-t="Google account of this tablet">Google account of this tablet</span><select id="loginTab"></select></label>
+    <label id="codeRow" hidden><span data-t="Access code">Access code</span><input id="loginCode" type="password" autocomplete="off" inputmode="text"></label>
     <p id="loginErr" class="err" role="alert"></p>
-    <div id="gbox" hidden><p class="hint" style="margin:0 0 10px">Enter your name, then sign in with the Google account of this tablet.</p><div id="gbtn" style="display:flex;justify-content:center"></div></div>
-    <button class="btn primary" type="submit" id="loginGo">Continue</button>
+    <div id="gbox" hidden><p class="hint" style="margin:0 0 10px" data-t="Enter your name, then sign in with the Google account of this tablet.">Enter your name, then sign in with the Google account of this tablet.</p><div id="gbtn" style="display:flex;justify-content:center"></div></div>
+    <button class="btn primary" type="submit" id="loginGo" data-t="Continue">Continue</button>
   </form>
 </div>
 <noscript>This app needs JavaScript.</noscript>

@@ -174,3 +174,23 @@ button{cursor:pointer}
 #lunchAlert{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:20px}
 #lunchAlert .box{background:var(--surface);border-radius:20px;padding:24px 20px;width:100%;max-width:420px;display:grid;gap:12px;text-align:center}
 #lunchAlert .big.btn{width:100%}#lunchAlert div.big{font-size:44px}#lunchAlert h2{margin:0}#lunchAlert p{margin:0;color:var(--ink-2)}
+.langsw{display:flex;gap:8px;justify-content:center;margin:0 0 14px}
+.langsw button{min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;font-weight:600}
+.langsw button[aria-pressed=true]{background:var(--spruce);border-color:var(--spruce);color:var(--on-spruce)}
+
+/* form layout like AppSheet: info lines, label left / control right */
+.sheet .info{padding:6px 16px 2px}
+.sheet .info.bot{padding:4px 16px 12px}
+.ititle{font:700 19px/1.2 var(--display);margin:4px 0 8px}
+.iline{font-size:15px;margin:0 0 6px;color:var(--ink)}
+.iline.red{color:var(--red);font-weight:700}
+.iline.sm{font-size:13px;color:var(--ink-2);margin:0 0 3px}
+.sheet .fld{grid-template-columns:34% 1fr;align-items:center;gap:10px;padding:8px 14px}
+.sheet .fld>label{margin:0}
+.sheet .fld select{appearance:auto}
+.sheet .fld textarea{min-height:48px}
+
+.whoami{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:6px 14px;background:var(--surface);border-bottom:1px solid var(--line);font-size:14px}
+.whoami b{font-weight:700}.whoami span{color:var(--ink-2);overflow-wrap:anywhere}.whoami .warn{color:var(--red)}
+
+.row .quick{flex:0 0 auto;min-height:44px;padding:0 14px;font-size:14px;white-space:nowrap}

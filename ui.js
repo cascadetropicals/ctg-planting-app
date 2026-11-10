@@ -3,6 +3,7 @@ import { S, subscribe, context, setFields, flagRow, addRecord, chipOn, toggleChi
 import { VIEWS, VBAR, viewById, CHIPS, isPlugSize, reasonKey } from './views.js';
 import { FORMS, PREFILL, FORM_DEFAULTS, readyDate } from './forms.js';
 import { fmtDate, fmtDateTime, fmtNum, norm, esc, nowStamp } from './format.js';
+import { t, getLang, setLang, tItems, tSignedIn, tGoogle, tTablet, tTitle, tAgain, tSaved } from './i18n.js';
 
 const $ = s => document.querySelector(s);
 export function h(tag, attrs, ...kids) {
@@ -10,10 +11,10 @@ export function h(tag, attrs, ...kids) {
   for (const [k, v] of Object.entries(attrs || {})) {
     if (k.startsWith('aria-') && typeof v === 'boolean') { e.setAttribute(k, String(v)); continue; }
     if (v == null || v === false) continue;
-    if (k === 'class') e.className = v; else if (k === 'text') e.textContent = v;
-    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v);
+    if (k === 'class') e.className = v; else if (k === 'text') e.textContent = t(v);
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : (k === 'aria-label' || k === 'title' || k === 'placeholder' ? t(v) : v));
   }
-  for (const c of kids.flat()) if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(c));
+  for (const c of kids.flat()) if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(typeof c === 'string' ? t(c) : c));
   return e;
 }
 const NOFMT = new Set(['Forecast #', 'Plant Week', 'Ready Week', 'Incoming Week', 'Item #', 'Item Code', 'ID', 'Plant #', 'QCell', 'Size']);
@@ -90,19 +91,24 @@ function renderChips() {
   el.hidden = !el.childElementCount;
 }
 function rowEl(v, r) {
-  const sent = S.sent[v.table + ':' + r._k + ':p'] || S.sent[v.table + ':' + r._k + ':l'];
   const subs = (v.sub || []).map(c => show(c, r[c])).filter(Boolean);
   const tags = [];
   if (r['Planted on App']) tags.push(h('span', { class: 'tag green', text: 'Planted' }));
   if (r['Flagged on App'] || r.Flagged) tags.push(h('span', { class: 'tag green', text: 'Flagged' }));
   if (r.Transferred) tags.push(h('span', { class: 'tag blue', text: 'Transferred' }));
   if (r['Label added']) tags.push(h('span', { class: 'tag green', text: 'Label added' }));
-  if (sent) tags.push(h('span', { class: 'tag amber', text: 'Sent' }));
   const sz = r.Size || (v.kind === 'urc' ? (r['URC Priority'] || '–') : '');
   return h('div', { class: 'row' + (r['Planted on App'] || r['Flagged on App'] ? ' done' : ''), role: 'listitem', 'data-k': r._k, 'aria-selected': U.sel === r._k, onclick: () => select(r._k) },
     sz !== '' ? h('div', { class: 'sz', text: String(sz) }) : null,
     h('div', { class: 'tx' }, h('div', { class: 't1', text: ((r.Genus || '') + ' ' + (r.Variety || '')).trim() || r['Vendor Name'] || '' }),
-      h('div', { class: 't2' }, subs.join(' · '), tags)));
+      h('div', { class: 't2' }, subs.join(' · '), tags)),
+    quickBtn(v, r));
+}
+// One-tap action on the row itself (Planting / Label printing / Flag): opens the form without opening the detail view
+function quickBtn(v, r) {
+  const k = (v.actions || []).find(x => MAIN_ACTIONS.includes(x) && ACTIONS[x] && ACTIONS[x].show(r));
+  if (!k) return null;
+  return h('button', { class: 'btn primary quick', type: 'button', onclick: e => { e.stopPropagation(); ACTIONS[k].run(r, v); } }, ACTIONS[k].label);
 }
 function vendorRow(r) {
   const on = !!r.VendorConfirmed;
@@ -125,7 +131,7 @@ function renderList() {
   }
   renderVbar();
   $('#searchbar').hidden = v.kind === 'vendors';
-  $('#viewhead').append(h('span', { text: v.name }), h('span', { text: fmtNum(U.rows.length) + (U.rows.length === 1 ? ' item' : ' items') }));
+  $('#viewhead').append(h('span', { text: v.name }), h('span', { text: fmtNum(U.rows.length) + ' ' + tItems(U.rows.length) }));
   if (!S.loaded) { list.append(h('div', { class: 'empty' }, h('b', { text: 'Loading…' }))); return; }
   if (v.kind === 'urc' && !S.prefs.urc.length) { list.append(h('div', { class: 'empty' }, h('b', { text: 'Select incoming vendor' }), h('p', { text: 'Tap one or more vendors above.' }))); return; }
   if (!U.rows.length) { list.append(h('div', { class: 'empty' }, h('b', { text: 'Nothing here' }), h('p', { text: 'No items match this view right now.' }))); return; }
@@ -160,7 +166,7 @@ function renderDetail() {
     h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Back', onclick: () => { U.sel = null; $('#app').classList.remove('phone-detail'); renderList(); renderDetail(); } }, '←'),
     h('div', { class: 'ttl' }, ((r.Genus || '') + ' ' + (r.Variety || '')).trim(), h('small', { text: [r.Size, r.Vendor || r.Location].filter(Boolean).join(' · ') }))));
   const body = h('div', { class: 'dbody' });
-    const MAIN = ['plantInc', 'labelInc', 'plantPlug', 'labelPlug', 'plantFin', 'labelFin', 'flagPlug', 'flagFin', 'addLabels'];
+    const MAIN = MAIN_ACTIONS;
   const keys = (v.actions || []).filter(k => ACTIONS[k] && ACTIONS[k].show(r));
   const main = keys.filter(k => MAIN.includes(k)), more = keys.filter(k => !MAIN.includes(k));
   if (main.length) body.append(h('div', { class: 'actions main' }, main.map(k => h('button', { class: 'btn primary big', type: 'button', onclick: () => ACTIONS[k].run(r, v) }, ACTIONS[k].label))));
@@ -186,7 +192,7 @@ const empGet = () => { try { return JSON.parse(localStorage.getItem(EK) || '{}')
 const empLast = kind => { const t = (empGet()[(S.user && S.user.name || '') + '|' + kind]) || 0; return t; };
 const sameDay = t => t && new Date(t).toDateString() === new Date().toDateString();
 const hhmm = t => { const d = new Date(t); return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); };
-const empStatus = kind => { const t = empLast(kind); return sameDay(t) ? '✓ ' + hhmm(t) : 'not yet today'; };
+const empStatus = kind => { const last = empLast(kind); return sameDay(last) ? '✓ ' + hhmm(last) : t('not yet today'); };
 const ago = t => { const m = Math.max(1, Math.round((Date.now() - t) / 60000)); return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min'; };
 function toast(msg) {
   let t = document.querySelector('#toast'); if (!t) { t = h('div', { id: 'toast', role: 'status' }); document.body.append(t); }
@@ -197,9 +203,9 @@ function empieza(kind) {
   const go = () => {
     addRecord(kind === 'plug' ? 'gfPlug' : 'gfFin', { 'Choose Plant': 'Empieza', Employee: S.user.name }, null);
     const m = empGet(); m[(S.user.name || '') + '|' + kind] = Date.now(); try { localStorage.setItem(EK, JSON.stringify(m)); } catch (e) { /* ignore */ }
-    toast('✓ Empieza ' + label + ' saved – ' + S.user.name + ' ' + hhmm(Date.now())); renderVbar();
+    toast(tSaved(label, S.user.name, hhmm(Date.now()))); renderVbar();
   };
-  if (last && Date.now() - last < 3 * 3600 * 1000) choose('Empieza ' + label + ' – submit again?', 'You already submitted Empieza ' + label + ' ' + ago(last) + ' ago (at ' + hhmm(last) + '). Are you sure you want to submit again?', [{ label: 'Yes, submit again', run: go }, { label: 'No, cancel', run: () => {} }]);
+  if (last && Date.now() - last < 3 * 3600 * 1000) choose(tTitle(label), tAgain(label, ago(last), hhmm(last)), [{ label: 'Yes, submit again', run: go }, { label: 'No, cancel', run: () => {} }]);
   else go();
 }
 // Lunch alert: from 12:40 Pacific time, until someone taps Empieza (plugs or finished) after 12:40. Only while the app is open.
@@ -248,6 +254,7 @@ function renderVbar() {
 }
 
 // ---------------- actions ----------------
+const MAIN_ACTIONS = ['plantInc', 'labelInc', 'plantPlug', 'labelPlug', 'plantFin', 'labelFin', 'flagPlug', 'flagFin', 'addLabels'];
 const sentKey = (t, r, k) => t + ':' + r._k + ':' + k;
 const plugForm = (r, v) => v.table === 'incoming' ? isPlugSize(r.Size) : v.table === 'plugPlant';
 const ACTIONS = {
@@ -307,7 +314,13 @@ export function openSheet({ title, fields, values, onSave, form }) {
       const inp = h('input', { type: 'text', value: vals[f.k] ?? '', disabled: true }); inputs[f.k] = inp; ctl = inp;
       const fe0 = h('div', { class: 'fld ro' }, h('label', {}, f.label), ctl); flds[f.k] = fe0; return fe0;
     }
-    if (f.type === 'plant' || (f.type === 'enum' && listFor(f).length)) {
+    if (f.type === 'enum' && listFor(f).length && listFor(f).length <= 80) {
+      const sel = h('select', {}), cur = vals[f.k] ?? '';
+      const opts = listFor(f).slice(); if (cur !== '' && !opts.includes(cur)) opts.unshift(cur);
+      sel.append(h('option', { value: '' }, ''), ...opts.map(o => h('option', { value: o }, o)));
+      sel.value = cur; sel.addEventListener('change', () => { vals[f.k] = sel.value; changed(f.k); vis(); });
+      inputs[f.k] = sel; ctl = sel;
+    } else if (f.type === 'plant' || (f.type === 'enum' && listFor(f).length)) {
       const t = typeahead(f, vals[f.k], () => listFor(f), (v, u) => { vals[f.k] = v; if (!u) changed(f.k); vis(); }); inputs[f.k] = t.inp; ctl = t.wrap;
     } else if (f.type === 'num') {
       const inp = h('input', { type: 'number', inputmode: 'numeric', value: vals[f.k] ?? '', min: '0' }); inp.addEventListener('input', () => { vals[f.k] = inp.value; vis(); });
@@ -350,15 +363,32 @@ export function openSheet({ title, fields, values, onSave, form }) {
     const d = S.L.dd.list.find(x => x.b && norm(x.b) === c);
     if (d) { refill('Choose Plant', d.d); changed('Choose Plant'); } else flds['Escanear UPC / Scan UPC']?.classList.add('bad');
   }
-  const main = fields.filter(f => !f.hide), more = [];
-  const body = h('div', { class: 'body' }, h('div', { class: 'grp' }, main.map(mk)));
+  // AppSheet-style layout: key facts as compact text lines on top, the fields to fill in right below, the rest as small lines at the bottom
+  const TOPK = new Set(['Choose Plant', 'FromContain', 'QCell', 'Plug Location', 'Size', 'tamaño / size', 'Casa / Greenhouse', 'Goal']);
+  const BOTK = ['Vendor', 'ToContain', 'Plant Date', 'Ready Date', 'Qty Projected', 'Qty of flats', 'Forecast #', 'Assortment'];
+  const roF = f => f.ro && !f.calc && !f.hide;
+  const topF = fields.filter(f => roF(f) && TOPK.has(f.k)), botF = fields.filter(f => roF(f) && BOTK.includes(f.k));
+  const init = { ...vals }, iv = k => { const x = init[k]; return x == null ? '' : String(x); };
+  const dt = x => /^\d{4}-\d{2}-\d{2}$/.test(x) ? fmtDate(x) : x;
+  const info = [];
+  if (topF.some(f => f.k === 'Choose Plant') && iv('Choose Plant')) info.push(h('div', { class: 'ititle', text: iv('Choose Plant') }));
+  const has = k => topF.some(f => f.k === k);
+  const from = [has('FromContain') && t('From') + ': ' + iv('FromContain'), has('QCell') && 'QCell: ' + iv('QCell'), has('Plug Location') && t('Plug Location') + ': ' + iv('Plug Location')].filter(Boolean);
+  if (from.length) info.push(h('div', { class: 'iline red', text: from.join('  |  ') }));
+  const sz = has('tamaño / size') ? t('Size') + ': ' + iv('tamaño / size') : has('Size') ? t('Finished size') + ': ' + iv('Size') : '';
+  const l2 = [sz, has('Casa / Greenhouse') && t('Location') + ': ' + iv('Casa / Greenhouse')].filter(Boolean);
+  if (l2.length) info.push(h('div', { class: 'iline', text: l2.join('  |  ') }));
+  if (has('Goal')) info.push(h('div', { class: 'iline', text: t('Goal') + ': ' + iv('Goal') }));
+  const bot = botF.filter(f => iv(f.k) !== '').map(f => h('div', { class: 'iline sm', text: (f.k === 'Assortment' ? t('Asst') : t(f.label)) + ': ' + dt(iv(f.k)) }));
+  const main = fields.filter(f => !f.hide && !topF.includes(f) && !botF.includes(f)), more = [];
+  const body = h('div', { class: 'body' }, info.length ? h('div', { class: 'info' }, info) : null, h('div', { class: 'grp' }, main.map(mk)), bot.length ? h('div', { class: 'info bot' }, bot) : null);
   if (more.length) body.append(h('details', { class: 'grp' }, h('summary', { text: 'More fields' }), more.map(mk)));
   const err = h('p', { class: 'err', style: 'padding:0 14px', role: 'alert' });
   const save = h('button', { class: 'btn primary', type: 'button', onclick: () => {
     for (const f of fields) if (f.type === 'date' && inputs[f.k]) vals[f.k] = inputs[f.k].value;
     const bad = fields.filter(f => f.req && !f.ro && !hiddenNow(f) && !String(vals[f.k] ?? '').trim());
     Object.entries(flds).forEach(([k, e]) => e.classList.toggle('bad', bad.some(f => f.k === k)));
-    if (bad.length) { err.textContent = 'Please fill: ' + bad.map(f => f.label).join(', '); return; }
+    if (bad.length) { err.textContent = t('Please fill: ') + bad.map(f => t(f.label)).join(', '); return; }
     const out = {}; for (const f of fields) { if (hiddenNow(f)) continue; const v = vals[f.k]; if (v !== '' && v != null) out[f.k] = typeof v === 'string' ? v.trim() : v; }
     close(); onSave(out);
   } }, 'Save');
@@ -393,22 +423,28 @@ function openForm(id, prefill, opts = {}) {
 const PILL = { saved: 'Saved', saving: 'Saving…', offline: 'Offline – will send later', err: 'Problem – tap to retry' };
 function renderPill() {
   const p = $('#pill'); p.className = 'pill ' + (S.status === 'saved' ? '' : S.status);
-  $('#pillText').textContent = PILL[S.status] + (S.status === 'offline' && S.queue.length ? ' (' + S.queue.length + ')' : '');
+  $('#pillText').textContent = t(PILL[S.status]) + (S.status === 'offline' && S.queue.length ? ' (' + S.queue.length + ')' : '');
   p.title = S.lastErr || '';
 }
 export function openMenu() {
   const m = $('#menu'); m.textContent = '';
-  m.append(h('div', { class: 'info', text: 'Signed in as ' + (S.user ? S.user.name : '') }));
-  if (S.user && S.user.email) m.append(h('div', { class: 'info', text: 'Google account: ' + S.user.email }));
-  else if (((S.L.lists || {}).tabletEmail || []).length) m.append(h('button', { type: 'button', onclick: () => { m.hidden = true; askTablet(true); } }, 'Tablet account: ' + (S.tablet || 'not set')));
+  m.append(h('div', { class: 'info', text: tSignedIn(S.user ? S.user.name : '') }));
+  if (S.user && S.user.email) m.append(h('div', { class: 'info', text: tGoogle(S.user.email) }));
+  else if (((S.L.lists || {}).tabletEmail || []).length) m.append(h('button', { type: 'button', onclick: () => { m.hidden = true; askTablet(true); } }, tTablet(S.tablet)));
   if (S.lastErr) m.append(h('div', { class: 'errl', text: S.lastErr }));
-  m.append(h('button', { type: 'button', onclick: () => { m.hidden = true; refreshNow(); } }, 'Refresh now'),
+  m.append(h('button', { type: 'button', onclick: () => { m.hidden = true; applyLang(getLang() === 'es' ? 'en' : 'es'); } }, t('Language') + ': ' + (getLang() === 'es' ? 'Español → English' : 'English → Español')),
+    h('button', { type: 'button', onclick: () => { m.hidden = true; refreshNow(); } }, 'Refresh now'),
     h('button', { type: 'button', onclick: () => { m.hidden = true; logout(); } }, 'Switch user'));
   m.hidden = false;
   setTimeout(() => document.addEventListener('click', function f(e) { if (!m.contains(e.target)) { m.hidden = true; } document.removeEventListener('click', f); }, { once: true }), 0);
 }
+function renderWho() {
+  const w = $('#whoami'); if (!w) return; const mail = S.user && (S.user.email || S.tablet) || '';
+  w.textContent = ''; w.hidden = !S.user;
+  if (S.user) w.append(h('b', { text: S.user.name }), mail ? h('span', { text: mail }) : h('span', { class: 'warn', text: t('no Google account set') }));
+}
 let rafR = 0;
-function renderAll() { computeCounts(); renderTabs(); renderChips(); renderList(); renderDetail(); renderPill(); const u = S.user && S.user.name; $('#userInit').textContent = u ? u[0].toUpperCase() : '?'; }
+function renderAll() { renderWho(); computeCounts(); renderTabs(); renderChips(); renderList(); renderDetail(); renderPill(); const u = S.user && S.user.name; $('#userInit').textContent = u ? u[0].toUpperCase() : '?'; }
 export function mount() {
   $('#search').addEventListener('input', e => { U.q = e.target.value; U.limit = 60; $('#clearSearch').hidden = !U.q; renderList(); });
   $('#clearSearch').addEventListener('click', () => { U.q = ''; $('#search').value = ''; $('#clearSearch').hidden = true; renderList(); });
@@ -419,7 +455,7 @@ export function mount() {
   subscribe(what => {
     if (what === 'status') return renderPill();
     cancelAnimationFrame(rafR); rafR = requestAnimationFrame(() => {
-      const top = $('#list').scrollTop; computeCounts(); renderTabs(); renderChips();
+      renderWho(); const top = $('#list').scrollTop; computeCounts(); renderTabs(); renderChips();
       const n = Math.max(U.limit, 60); U.limit = n; renderList(); $('#list').scrollTop = top; renderDetail(); renderPill();
     });
   });
@@ -428,3 +464,14 @@ export function mount() {
   setInterval(checkLunch, 30000); document.addEventListener('visibilitychange', () => { if (!document.hidden) checkLunch(); }); window.__lunchCheck = checkLunch;
 }
 export const refreshUI = () => renderAll();
+// static texts in index.html carry data-t (text) / data-tp (placeholder) / data-ta (aria-label) with the English original
+export function translateStatic() {
+  document.querySelectorAll('[data-t]').forEach(e => { e.textContent = t(e.dataset.t); });
+  document.querySelectorAll('[data-tp]').forEach(e => { e.setAttribute('placeholder', t(e.dataset.tp)); });
+  document.querySelectorAll('[data-ta]').forEach(e => { e.setAttribute('aria-label', t(e.dataset.ta)); });
+  document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === getLang())));
+}
+export function applyLang(l) {
+  setLang(l); translateStatic();
+  if (S.user && !$('#app').hidden) { renderAll(); document.querySelector('#lunchAlert')?.remove(); if (window.__lunchCheck) window.__lunchCheck(); }
+}
