@@ -43,3 +43,9 @@ export const nowISO = () => {
 export const norm = s => String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' ').trim();
 export const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 export const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// AppSheet WEEKNUM(): Sunday start, week 1 contains Jan 1 (used by the "Planting Incoming URC/TC | wk N" header)
+export function usWeek(iso) {
+  const p = String(iso).slice(0, 10).split('-').map(Number), d = Date.UTC(p[0], p[1] - 1, p[2]), j1 = new Date(Date.UTC(p[0], 0, 1));
+  return Math.floor(((d - j1.getTime()) / 86400000 + j1.getUTCDay()) / 7) + 1;
+}

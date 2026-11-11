@@ -3,7 +3,7 @@ import * as api from './api.js';
 import { S, subscribe, context, setFields, flagRow, addRecord, chipOn, toggleChip, setPref, plantOptions, logout, refreshNow, setTablet } from './store.js';
 import { VIEWS, VBAR, viewById, CHIPS, isPlugSize, reasonKey } from './views.js';
 import { FORMS, PREFILL, FORM_DEFAULTS, readyDate } from './forms.js';
-import { fmtDate, fmtDateTime, fmtNum, norm, esc, nowStamp } from './format.js';
+import { fmtDate, fmtDateTime, fmtNum, norm, esc, nowStamp, usWeek, todayISO } from './format.js';
 import { t, getLang, setLang, tItems, tSignedIn, tGoogle, tTablet, tTitle, tAgain, tSaved } from './i18n.js';
 
 const $ = s => document.querySelector(s);
@@ -125,6 +125,7 @@ function vendorRow(r) {
 const HEAD = { planIncoming: ['Planting Incoming URC/TC', 'Incoming URC/TC'], planPlugs: ['Planting Plugs', 'Planting Plugs'], planFinished: ['Planting Finished', 'Planting Finished 2'], plant2in: ['2in Planting', 'Planting Finished 2'] };
 function viewTitle(v) {
   const hd = HEAD[v.id]; if (!hd) return v.name;
+  if (v.id === 'planIncoming') return hd[0] + ' | wk ' + usWeek(todayISO()); // AppSheet: "Planting Incoming URC/TC | wk " & WEEKNUM(today())
   const w = (S.L.weeks || {})[hd[1]]; return hd[0] + (w ? ' | ' + w : '');
 }
 let io = null;
