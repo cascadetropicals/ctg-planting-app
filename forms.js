@@ -16,9 +16,9 @@ const PLUG_FIELDS = [
   E('Employee 2', 'Employee 2', { list: 'employee', showIf: v => !!v['Employee'] }),
   E('Casa / Greenhouse', 'Casa / Greenhouse', { req: true, list: 'greenhouse' }),
   F('Notas / Notes', 'Notas / Notes', 'long'),
-  F('Vendor', 'Vendor', 'text', RO), F('Plant Date', 'Plant date', 'date', { ro: true }), F('ToContain', 'ToContain', 'text', RO),
-  F('Ready Date', 'Ready date', 'date', { ro: true }), F('Qty Projected', 'Qty projected', 'text', RO), F('Forecast #', 'Forecast #', 'text', RO), F('Assortment', 'Assortment', 'text', RO),
-  F('Plug Type', 'Plug type', 'text', { hide: true }), F('Incoming ID', 'Incoming ID', 'text', { hide: true })
+  F('Vendor', 'Vendor', 'text', RO), F('Plant Date', 'Plant Date', 'date', { ro: true }), F('ToContain', 'ToContain', 'text', RO),
+  F('Ready Date', 'Ready Date', 'date', { ro: true }), F('Qty Projected', 'Qty Projected', 'text', RO), F('Forecast #', 'Forecast #', 'text', RO), F('Assortment', 'Assortment', 'text', RO),
+  F('Plug Type', 'Plug Type', 'text', { hide: true }), F('Incoming ID', 'Incoming ID', 'text', { hide: true })
 ];
 const FIN_FIELDS = [
   F('Choose Plant', 'Plant', 'plant', { ro: true, src: 'item' }),
@@ -31,9 +31,9 @@ const FIN_FIELDS = [
   E('Employee 2', 'Employee 2', { list: 'employee', showIf: v => !!v['Employee'] }),
   E('Casa / Greenhouse', 'Casa / Greenhouse', { req: true, list: 'greenhouse' }),
   F('Notas / Notes', 'Notas / Notes', 'long'),
-  F('Vendor', 'Vendor', 'text', RO), F('Plant Date', 'Plant date', 'date', { ro: true }), F('Ready Date', 'Ready date', 'date', { ro: true }),
-  F('Qty Projected', 'Qty projected', 'text', RO), F('Forecast #', 'Forecast #', 'text', RO), F('Assortment', 'Assortment', 'text', RO),
-  F('Item Code', 'Item code', 'text', { hide: true }), F('Item #', 'Item #', 'text', { hide: true }), F('Plug Location', 'Plug location', 'text', { hide: true }), F('Incoming ID', 'Incoming ID', 'text', { hide: true })
+  F('Vendor', 'Vendor', 'text', RO), F('Plant Date', 'Plant Date', 'date', { ro: true }), F('Ready Date', 'Ready Date', 'date', { ro: true }),
+  F('Qty Projected', 'Qty Projected', 'text', RO), F('Forecast #', 'Forecast #', 'text', RO), F('Assortment', 'Assortment', 'text', RO),
+  F('Item Code', 'Item code', 'text', { hide: true }), F('Item #', 'Item #', 'text', { hide: true }), F('Plug Location', 'Plug Location', 'text', { hide: true }), F('Incoming ID', 'Incoming ID', 'text', { hide: true })
 ];
 function plugStock(L, plant) {
   const pn = L.ddPlant[String(plant || '').trim().toLowerCase().replace(/\s+/g, ' ')];
@@ -55,7 +55,7 @@ const FIN_ADD_FIELDS = [
   F('Choose Plant', 'Choose plant', 'plant', { req: true, src: 'item' }),
   F('cantidad / Qty', 'Cantidad / Qty', 'num', { req: true }),
   E('Casa / Greenhouse', 'Casa / Greenhouse', { req: true, list: 'greenhouse' }),
-  E('Plug Location', 'Plug location', { list: 'plugLocation' }), F('QCell', 'QCell', 'num'), E('FromContain', 'FromContain', { list: 'fromContain' }),
+  E('Plug Location', 'Plug Location', { list: 'plugLocation' }), F('QCell', 'QCell', 'num'), E('FromContain', 'FromContain', { list: 'fromContain' }),
   E('Employee', 'Employee', { req: true, list: 'employee' }),
   E('Employee 2', 'Employee 2', { list: 'employee', showIf: v => !!v['Employee'] }),
   F('Notas / Notes', 'Notas / Notes', 'long')

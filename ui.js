@@ -271,7 +271,6 @@ const ACTIONS = {
   reasonFin: { label: 'Add reason why not planted', show: () => true, run: (r, v) => reasonRun(r, v, 'Finished audit reason', 'Reason why not flagged', 'reasonFin') },
   addLabels: { label: 'Add labels', show: r => !r['Label added'], run: (r, v) => { setFields(v.table, r, { 'Label added': true }); openForm('addLabels', PREFILL.finAddLabels(r, S.L), { sentKey: sentKey(v.table, r, 'l') }); } },
   setPlanted: { label: 'Set Planted on App', show: r => !r['Planted on App'], run: (r, v) => setFields(v.table, r, { 'Planted on App': true }) },
-  resetPlanted: { label: 'Reset Planted on App', show: r => !!r['Planted on App'], run: (r, v) => setFields(v.table, r, { 'Planted on App': false }) },
   labelsBy: { label: 'Labels added by', show: () => true, run: (r, v) => reasonRun(r, v, 'Label added by', 'Label added by', 'labelBy') }
 };
 function plantRun(r, v) {

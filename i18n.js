@@ -19,7 +19,7 @@ const ES = {
   // row tags / actions
   'Planted': 'Plantado', 'Flagged': 'Bandera puesta', 'Transferred': 'Transferido', 'Label added': 'Etiqueta agregada',
   'Planting': 'Plantar', 'Label printing': 'Imprimir etiqueta', 'Flag': 'Poner bandera', 'Add reason why not planted': 'Agregar motivo: no se plantó',
-  'Add labels': 'Agregar etiquetas', 'Reset Planted on App': 'Quitar marca de plantado', 'Labels added by': 'Etiquetas agregadas por',
+  'Add labels': 'Agregar etiquetas', 'Labels added by': 'Etiquetas agregadas por',
   '+ Addition': '+ Adición', 'Add a planting record': 'Agregar un registro de plantado', 'For plants that are not in the list.': 'Para plantas que no están en la lista.',
   'Plugs Addition': 'Adición de plugs', 'Finished Addition': 'Adición de terminadas',
   'Plug planting record': 'Registro de plantado de plugs', 'Plug label printing record': 'Registro de etiquetas de plugs', 'Finished planting record': 'Registro de plantado de terminadas',
@@ -33,8 +33,8 @@ const ES = {
   'Labels inventory qty': 'Etiquetas en inventario', 'Qty not incoming': 'Cantidad sin pedido', 'Inputs on Order': 'Pedido en camino', 'URC Priority': 'Prioridad URC',
   // forms
   'Plant': 'Planta', 'Size': 'Tamaño', 'Quantity (plugs, not flats)': 'Cantidad (plugs, no flats)', 'Employee': 'Empleado', 'Employee 2': 'Empleado 2',
-  'Plant date': 'Fecha de plantado', 'Ready date': 'Fecha lista', 'Qty projected': 'Cantidad proyectada', 'Plug type': 'Tipo de plug',
-  'Plugs used': 'Plugs usados', 'Choose plant': 'Elegir planta', 'Plug location': 'Ubicación del plug', 'Item code': 'Código de artículo',
+  'Plant Date': 'Fecha de plantado', 'Ready Date': 'Fecha lista', 'Qty Projected': 'Cantidad proyectada', 'Plug Type': 'Tipo de plug',
+  'Plugs used': 'Plugs usados', 'Choose plant': 'Elegir planta', 'Plug Location': 'Ubicación del plug', 'Item code': 'Código de artículo',
   'From': 'Origen', 'Finished size': 'Terminada', 'Less': 'Menos', 'More': 'Más', 'Asst': 'Surtido', 'Vendor': 'Proveedor',
   'no Google account set': 'sin cuenta de Google',
   'Please fill: ': 'Por favor completa: ',
