@@ -200,3 +200,7 @@ button{cursor:pointer}
 .brand{flex:1 1 0}.top-r{flex:0 0 auto}.pill{white-space:nowrap}
 .app{grid-template-columns:minmax(0,1fr)}@media (max-width:640px){.pill{padding:0 10px}.top{gap:8px}}
 @media (max-width:640px){.pill:not(.saving):not(.offline):not(.err) #pillText{display:none}.pill:not(.saving):not(.offline):not(.err){padding:0 12px}}
+
+.qgroup{display:flex;flex:0 0 auto;align-items:stretch}
+.qgroup .quick{border-top-right-radius:0;border-bottom-right-radius:0}
+.qgroup .play{flex:0 0 46px;min-width:46px;padding:0;display:flex;align-items:center;justify-content:center;border-top-left-radius:0;border-bottom-left-radius:0;border-left:1px solid rgba(255,255,255,.45);text-decoration:none;font-size:15px}

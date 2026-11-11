@@ -36,7 +36,7 @@ function make() {
   }
   for (let i = 0; i < 60; i++) {
     const it = pick(ITEMS);
-    pp.push({ Size: pick(['50', '72', '105']), Genus: it.g, Variety: it.v, Location: pick(LOCS), QCell: 8, Assortment: '', 'Plant Date': addDays(t, Math.round(rnd() * 50 - 40)), 'From Contain': pick(['Cutting', 'URC']),
+    pp.push({ 'Plant #': it.p, Size: pick(['50', '72', '105']), Genus: it.g, Variety: it.v, Location: pick(LOCS), QCell: 8, Assortment: '', 'Plant Date': addDays(t, Math.round(rnd() * 50 - 40)), 'From Contain': pick(['Cutting', 'URC']),
       ToContain: '72', 'Reason why not flagged': rnd() < 0.05 ? 'No space' : '', 'Plant Week': wk, 'Ready Week': wk + 6, Vendor: pick(VENDORS), 'Forecast #': '2026' + (4000 + i), Timestamp: ts(), 'Planted on App': rnd() < 0.3 });
   }
   for (let i = 0; i < 110; i++) {

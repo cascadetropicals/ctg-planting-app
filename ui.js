@@ -108,7 +108,11 @@ function rowEl(v, r) {
 function quickBtn(v, r) {
   const k = (v.actions || []).find(x => MAIN_ACTIONS.includes(x) && ACTIONS[x] && ACTIONS[x].show(r));
   if (!k) return null;
-  return h('button', { class: 'btn primary quick', type: 'button', onclick: e => { e.stopPropagation(); ACTIONS[k].run(r, v); } }, ACTIONS[k].label);
+  const main = h('button', { class: 'btn primary quick', type: 'button', onclick: e => { e.stopPropagation(); ACTIONS[k].run(r, v); } }, ACTIONS[k].label);
+  if (!(v.video && r._video)) return main;
+  // plant has an instruction video: play button as the right third of the quick action
+  const play = h('a', { class: 'btn primary play', href: r._video, target: '_blank', rel: 'noopener', 'aria-label': 'Watch video', title: 'Watch video', onclick: e => e.stopPropagation() }, '\u25B6');
+  return h('div', { class: 'qgroup' }, main, play);
 }
 function vendorRow(r) {
   const on = !!r.VendorConfirmed;
