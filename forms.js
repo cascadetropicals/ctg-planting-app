@@ -80,7 +80,7 @@ export const FORMS = {
   plugLabels: { title: 'Plug label printing record', target: 'gfPlugLabels', fields: PLUG_LABEL_FIELDS },
   finPlanting: { title: 'Finished planting record', target: 'gfFin', fields: FIN_FIELDS },
   finLabels: { title: 'Finished label printing record', target: 'gfFinLabels', fields: FIN_LABEL_FIELDS },
-  plugAddition: { title: 'Plugs Addition', target: 'gfPlug', fields: PLUG_ADD_FIELDS },
+  plugAddition: { title: 'Plugs Addition', target: 'gfPlug', landing: 'plug', fields: PLUG_ADD_FIELDS },
   finAddition: { title: 'Finished Addition', target: 'gfFin', landing: 'fin', fields: FIN_ADD_FIELDS },
   plugStart: { title: 'Plug planting start', target: 'gfPlug', fields: START_FIELDS },
   finStart: { title: 'Finished planting start', target: 'gfFin', fields: START_FIELDS },
