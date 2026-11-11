@@ -121,6 +121,12 @@ function vendorRow(r) {
     h('button', { class: 'tile', role: 'switch', 'aria-checked': on, onclick: () => { setFields('vendors', r, { VendorConfirmed: !on }); } },
       h('span', { text: r['Vendor Name'] }), h('span', { class: 'sw' })));
 }
+// header like AppSheet: "Planting Plugs | wk 47 / 48" (the week text comes from the DD tab; shown only when it exists)
+const HEAD = { planIncoming: ['Planting Incoming URC/TC', 'Planting Incoming URC/TC'], planPlugs: ['Planting Plugs', 'Planting Plugs'], planFinished: ['Planting Finished', 'Planting Finished 2'], plant2in: ['2in Planting', 'Planting Finished 2'] };
+function viewTitle(v) {
+  const hd = HEAD[v.id]; if (!hd) return v.name;
+  const w = (S.L.weeks || {})[hd[1]]; return hd[0] + (w ? ' | ' + w : '');
+}
 let io = null;
 function renderList() {
   const v = view(), list = $('#list'); list.textContent = '';
@@ -136,7 +142,7 @@ function renderList() {
   }
   renderVbar();
   $('#searchbar').hidden = v.kind === 'vendors';
-  $('#viewhead').append(h('span', { text: v.name }), h('span', { text: fmtNum(U.rows.length) + ' ' + tItems(U.rows.length) }));
+  $('#viewhead').append(h('span', { text: viewTitle(v) }), h('span', { text: fmtNum(U.rows.length) + ' ' + tItems(U.rows.length) }));
   if (!S.loaded) { list.append(h('div', { class: 'empty' }, h('b', { text: 'Loading…' }))); return; }
   if (v.kind === 'urc' && !S.prefs.urc.length) { list.append(h('div', { class: 'empty' }, h('b', { text: 'Select incoming vendor' }), h('p', { text: 'Tap one or more vendors above.' }))); return; }
   if (!U.rows.length) { list.append(h('div', { class: 'empty' }, h('b', { text: 'Nothing here' }), h('p', { text: 'No items match this view right now.' }))); return; }
