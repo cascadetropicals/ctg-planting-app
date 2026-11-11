@@ -112,8 +112,8 @@ function enqueue(op) {
 }
 export const setFields = (table, row, patch) => enqueue({ type: 'set', table, key: row._k, patch, ident: ident(table, row) });
 export const flagRow = (table, row) => enqueue({ type: 'flag', table, key: row._k, ident: ident(table, row) });
-export function addRecord(target, values, sentKey) {
-  enqueue({ type: 'add', target, values, by: S.user && S.user.name, email: S.tablet || '' });
+export function addRecord(target, values, sentKey, landing) {
+  enqueue({ type: 'add', target, values, landing, by: S.user && S.user.name, email: S.tablet || '' });
   if (sentKey) { S.sent[sentKey] = Date.now(); LS.set('ctg_sent', S.sent); emit('data'); }
 }
 const ident = (table, r) => table === 'incoming' ? { ID: r.ID } : { Genus: r.Genus, Variety: r.Variety, Size: r.Size, 'Forecast #': r['Forecast #'] };

@@ -430,7 +430,7 @@ function openForm(id, prefill, opts = {}) {
   if (def.fields.some(f => f.k === 'Ready Date') && !base['Ready Date'] && base['Choose Plant']) { const rd = readyDate(S.L, base['Choose Plant'], base['Plant Date'], def.target === 'gfFin'); if (rd) base['Ready Date'] = rd; }
   if (def.target === 'gfPlugLabels' || def.target === 'gfFinLabels') Object.assign(base, recentGet(base['Forecast #']) || {}, { 'Choose Plant': base['Choose Plant'] });
   const form = { fields: def.fields, userReady: !!prefill['Ready Date'] };
-  openSheet({ title: def.title, fields: def.fields, values: base, form, onSave: vals => { recentPut(vals); addRecord(def.target, vals, opts.sentKey); if (opts.after) opts.after(); backToList(); } });
+  openSheet({ title: def.title, fields: def.fields, values: base, form, onSave: vals => { recentPut(vals); addRecord(def.target, vals, opts.sentKey, def.landing); if (opts.after) opts.after(); backToList(); } });
   if (def.target === 'gfPlugLabels' && base['Forecast #'] && !base[def.fields[1].k]) { // pre-fill Quantity with the qty planted
     api.call('qty', { fc: base['Forecast #'] }, S.user && S.user.token).then(r => {
       const inp = r && r.qty !== '' && r.qty != null && document.querySelector('#overlay input[type=number]');
