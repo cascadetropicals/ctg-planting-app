@@ -10,19 +10,19 @@ const RO = { ro: true };
 // Plug planting form (GF_PlugPlanting_Form): info rows read-only, editable: qty, Employee, Employee 2, Casa, Notes
 const PLUG_FIELDS = [
   F('Choose Plant', 'Plant', 'plant', { ro: true, src: 'plug' }),
-  F('FromContain', 'From container', 'text', RO), F(SIZE_ES, 'Size', 'text', RO), F('Qty of flats', 'Qty of flats', 'text', RO), F('Goal', 'Goal', 'text', RO), F('QCell', 'QCell', 'text', RO),
+  F('FromContain', 'FromContain', 'text', RO), F(SIZE_ES, 'Size', 'text', RO), F('Qty of flats', 'Qty of flats', 'text', RO), F('Goal', 'Goal', 'text', RO), F('QCell', 'QCell', 'text', RO),
   F(QTY, 'Quantity (plugs, not flats)', 'num', { req: true }),
   E('Employee', 'Employee', { req: true, list: 'employee' }),
   E('Employee 2', 'Employee 2', { list: 'employee', showIf: v => !!v['Employee'] }),
   E('Casa / Greenhouse', 'Casa / Greenhouse', { req: true, list: 'greenhouse' }),
   F('Notas / Notes', 'Notas / Notes', 'long'),
-  F('Vendor', 'Vendor', 'text', RO), F('Plant Date', 'Plant date', 'date', { ro: true }), F('ToContain', 'To container', 'text', RO),
+  F('Vendor', 'Vendor', 'text', RO), F('Plant Date', 'Plant date', 'date', { ro: true }), F('ToContain', 'ToContain', 'text', RO),
   F('Ready Date', 'Ready date', 'date', { ro: true }), F('Qty Projected', 'Qty projected', 'text', RO), F('Forecast #', 'Forecast #', 'text', RO), F('Assortment', 'Assortment', 'text', RO),
   F('Plug Type', 'Plug type', 'text', { hide: true }), F('Incoming ID', 'Incoming ID', 'text', { hide: true })
 ];
 const FIN_FIELDS = [
   F('Choose Plant', 'Plant', 'plant', { ro: true, src: 'item' }),
-  F('FromContain', 'From container', 'text', RO), F('Goal', 'Goal', 'text', RO), F('QCell', 'QCell', 'text', RO),
+  F('FromContain', 'FromContain', 'text', RO), F('Goal', 'Goal', 'text', RO), F('QCell', 'QCell', 'text', RO),
   F('Size', 'Size', 'enum', { req: false, list: 'size' }),
   F('cantidad / Qty', 'Cantidad / Qty', 'num', { req: true }),
   F('Plugs used', 'Plugs used', 'num', { showIf: (v, L) => plugStock(L, v['Choose Plant']) > 0 && Number(v['cantidad / Qty']) > 0 }),
@@ -44,9 +44,9 @@ const PLUG_ADD_FIELDS = [
   F('Choose Plant', 'Choose plant', 'plant', { req: true, src: 'plug' }),
   E(SIZE_ES, 'Tamaño / size', { req: true, list: 'size' }),
   F(QTY, 'Quantity (plugs, not flats)', 'num', { req: true }),
-  E('FromContain', 'From container', { list: 'fromContain' }), F('QCell', 'QCell', 'num'),
+  E('FromContain', 'FromContain', { list: 'fromContain' }), F('QCell', 'QCell', 'num'),
   E('Casa / Greenhouse', 'Casa / Greenhouse', { req: true, list: 'greenhouse' }),
-  E('ToContain', 'To container', { list: 'toContain' }), E('Vendor', 'Vendor', { list: 'vendor' }),
+  E('ToContain', 'ToContain', { list: 'toContain' }), E('Vendor', 'Vendor', { list: 'vendor' }),
   E('Employee', 'Employee', { req: true, list: 'employee' }),
   E('Employee 2', 'Employee 2', { list: 'employee', showIf: v => !!v['Employee'] }),
   F('Notas / Notes', 'Notas / Notes', 'long')
@@ -55,7 +55,7 @@ const FIN_ADD_FIELDS = [
   F('Choose Plant', 'Choose plant', 'plant', { req: true, src: 'item' }),
   F('cantidad / Qty', 'Cantidad / Qty', 'num', { req: true }),
   E('Casa / Greenhouse', 'Casa / Greenhouse', { req: true, list: 'greenhouse' }),
-  E('Plug Location', 'Plug location', { list: 'plugLocation' }), F('QCell', 'QCell', 'num'), E('FromContain', 'From container', { list: 'fromContain' }),
+  E('Plug Location', 'Plug location', { list: 'plugLocation' }), F('QCell', 'QCell', 'num'), E('FromContain', 'FromContain', { list: 'fromContain' }),
   E('Employee', 'Employee', { req: true, list: 'employee' }),
   E('Employee 2', 'Employee 2', { list: 'employee', showIf: v => !!v['Employee'] }),
   F('Notas / Notes', 'Notas / Notes', 'long')
