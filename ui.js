@@ -101,14 +101,14 @@ function rowEl(v, r) {
   return h('div', { class: 'row' + (r['Planted on App'] || r['Flagged on App'] ? ' done' : ''), role: 'listitem', 'data-k': r._k, 'aria-selected': U.sel === r._k, onclick: () => select(r._k) },
     sz !== '' ? h('div', { class: 'sz', text: String(sz) }) : null,
     h('div', { class: 'tx' }, h('div', { class: 't1', text: ((r.Genus || '') + ' ' + (r.Variety || '')).trim() || r['Vendor Name'] || '' }),
-      h('div', { class: 't2' }, subs.join(' · '), tags)),
+      h('div', { class: 't2' }, h('span', { class: 'subs', text: subs.join(' · ') }), tags)),
     quickBtn(v, r));
 }
 // One-tap action on the row itself (Planting / Label printing / Flag): opens the form without opening the detail view
 function quickBtn(v, r) {
   const k = (v.actions || []).find(x => MAIN_ACTIONS.includes(x) && ACTIONS[x] && ACTIONS[x].show(r));
   if (!k) return null;
-  const main = h('button', { class: 'btn primary quick', type: 'button', onclick: e => { e.stopPropagation(); ACTIONS[k].run(r, v); } }, ACTIONS[k].label);
+  const main = h('button', { class: 'btn primary quick' + (/^plant/.test(k) ? '' : ' small'), type: 'button', onclick: e => { e.stopPropagation(); ACTIONS[k].run(r, v); } }, ACTIONS[k].label);
   if (!(v.video && r._video && /^plant/.test(k))) return main; // play only next to Planting, never next to label buttons
   // plant has an instruction video: play button as the right third of the quick action
   const play = h('a', { class: 'btn primary play', href: r._video, target: '_blank', rel: 'noopener', 'aria-label': 'Watch video', title: 'Watch video', onclick: e => e.stopPropagation() }, '\u25B6');
