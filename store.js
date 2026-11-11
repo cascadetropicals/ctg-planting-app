@@ -88,7 +88,18 @@ function applyLocal(op, quiet) {
 export async function loadAll() {
   const res = await api.call('load', {}, S.user && S.user.token);
   if (res.error) throw new Error(res.error);
-  ingest(res); emit('data');
+  ingest(res); emit('data'); syncEmpieza();
+}
+// Empieza status follows the sheets: a deleted Empieza row clears the "✓ time" on this device too
+export async function syncEmpieza() {
+  try {
+    if (!S.user || S.queue.some(o => o.type === 'add' && o.values && String(o.values['Choose Plant']).toLowerCase() === 'empieza')) return;
+    const r = await api.call('empieza', {}, S.user.token); if (!r || r.error) return;
+    let m = {}; try { m = JSON.parse(localStorage.getItem('ctg_empieza') || '{}'); } catch (e) { m = {}; }
+    const nm = String(S.user.name || '').trim().toLowerCase();
+    for (const kind of ['plug', 'fin']) { const ms = (r[kind] || {})[nm], key = (S.user.name || '') + '|' + kind; if (ms) m[key] = ms; else delete m[key]; }
+    localStorage.setItem('ctg_empieza', JSON.stringify(m)); emit('data');
+  } catch (e) { /* offline: keep the device memory */ }
 }
 
 // ---------- auth ----------
@@ -162,7 +173,7 @@ export function start() {
   document.addEventListener('visibilitychange', onVis); addEventListener('online', onOnline); addEventListener('offline', () => setStatus('offline'));
   kick();
 }
-const onVis = () => { if (!document.hidden && S.user) { poll(); kick(); } };
+const onVis = () => { if (!document.hidden && S.user) { poll(); kick(); syncEmpieza(); } };
 const onOnline = () => { backoff = 0; kick(); poll(); };
 export function stop() { clearInterval(pollT); clearInterval(fullT); }
 export const refreshNow = async () => { try { await flush(); await loadAll(); setStatus('saved'); } catch (e) { setStatus(e.net ? 'offline' : 'err', e.message); } };
