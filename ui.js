@@ -255,7 +255,7 @@ function renderVbar() {
   const bar = $('#vbar'), cfg = VBAR[view().id]; bar.textContent = ''; bar.hidden = !cfg; if (!cfg) return;
   const KL = { plug: 'Plugs', fin: 'Finished' };
   const START = { plug: { label: 'Plugs – Empieza  (' + empStatus('plug') + ')', run: () => empieza('plug') }, fin: { label: 'Finished – Empieza  (' + empStatus('fin') + ')', run: () => empieza('fin') } };
-  const ADD = { plug: { label: 'Plugs Addition', run: () => openForm('plugAddition', {}, { sentKey: null }) }, fin: { label: 'Finished Addition', run: () => openForm('finAddition', {}, { sentKey: null }) } };
+  const ADD = { plug: { label: 'Plugs Addition', run: () => openForm('plugAddition', {}, { sentKey: null, landing: view().id === 'planIncoming' ? 'incPlug' : null }) }, fin: { label: 'Finished Addition', run: () => openForm('finAddition', {}, { sentKey: null, landing: view().id === 'planIncoming' ? 'incFin' : null }) } };
   if (cfg.start) {
     const st = cfg.start.map(k => KL[k] + ' ' + empStatus(k)).join(' · '), ok = cfg.start.every(k => sameDay(empLast(k)));
     bar.append(h('button', { class: 'btn primary emp' + (ok ? '' : ' warn'), type: 'button', onclick: () => cfg.start.length === 1 ? START[cfg.start[0]].run() : choose('Empieza – start work', 'Tap this every time you start again: morning, after break, lunch, pulling or other work. It is saved right away with your name.', cfg.start.map(k => START[k])) },
@@ -430,7 +430,7 @@ function openForm(id, prefill, opts = {}) {
   if (def.fields.some(f => f.k === 'Ready Date') && !base['Ready Date'] && base['Choose Plant']) { const rd = readyDate(S.L, base['Choose Plant'], base['Plant Date'], def.target === 'gfFin'); if (rd) base['Ready Date'] = rd; }
   if (def.target === 'gfPlugLabels' || def.target === 'gfFinLabels') Object.assign(base, recentGet(base['Forecast #']) || {}, { 'Choose Plant': base['Choose Plant'] });
   const form = { fields: def.fields, userReady: !!prefill['Ready Date'] };
-  openSheet({ title: def.title, fields: def.fields, values: base, form, onSave: vals => { recentPut(vals); addRecord(def.target, vals, opts.sentKey, def.landing); if (opts.after) opts.after(); backToList(); } });
+  openSheet({ title: def.title, fields: def.fields, values: base, form, onSave: vals => { recentPut(vals); addRecord(def.target, vals, opts.sentKey, opts.landing || def.landing); if (opts.after) opts.after(); backToList(); } });
   if (def.target === 'gfPlugLabels' && base['Forecast #'] && !base[def.fields[1].k]) { // pre-fill Quantity with the qty planted
     api.call('qty', { fc: base['Forecast #'] }, S.user && S.user.token).then(r => {
       const inp = r && r.qty !== '' && r.qty != null && document.querySelector('#overlay input[type=number]');
