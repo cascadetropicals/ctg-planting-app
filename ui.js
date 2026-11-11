@@ -255,7 +255,7 @@ function renderVbar() {
     bar.append(h('button', { class: 'btn primary emp' + (ok ? '' : ' warn'), type: 'button', onclick: () => cfg.start.length === 1 ? START[cfg.start[0]].run() : choose('Empieza – start work', 'Tap this every time you start again: morning, after break, lunch, pulling or other work. It is saved right away with your name.', cfg.start.map(k => START[k])) },
       h('b', { text: 'Empieza' }), h('small', { text: st })));
   }
-  if (cfg.add) bar.append(h('button', { class: 'btn', type: 'button', onclick: () => choose('Add a planting record', 'For plants that are not in the list.', cfg.add.map(k => ADD[k])) }, '+ Addition'));
+  if (cfg.add) bar.append(h('button', { class: 'btn', type: 'button', onclick: () => cfg.add.length === 1 ? ADD[cfg.add[0]].run() : choose('Add a planting record', 'For plants that are not in the list.', cfg.add.map(k => ADD[k])) }, '+ Addition'));
 }
 
 // ---------------- actions ----------------

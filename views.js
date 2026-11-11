@@ -108,7 +108,7 @@ const ALL_VIEWS = [
 ];
 // Only the planting tabs are shown (decision 6 Nov). To bring other tabs back, add their ids here.
 // view-level buttons (like AppSheet's Add buttons): start = Empieza chooser, add = additions
-export const VBAR = { planIncoming: { start: ['plug', 'fin'], add: ['plug', 'fin'] }, planPlugs: { start: ['plug'] }, planFinished: { start: ['fin'] }, plant2in: { start: ['fin'] } };
-export const ENABLED = ['planIncoming', 'planPlugs', 'planFinished', 'plant2in', 'finAddition'];
+export const VBAR = { planIncoming: { start: ['plug', 'fin'], add: ['plug', 'fin'] }, planPlugs: { start: ['plug'], add: ['plug'] }, planFinished: { start: ['fin'], add: ['fin'] }, plant2in: { start: ['fin'], add: ['fin'] } };
+export const ENABLED = ['planIncoming', 'planPlugs', 'planFinished', 'plant2in'];
 export const VIEWS = ALL_VIEWS.filter(v => ENABLED.includes(v.id));
 export const viewById = id => VIEWS.find(v => v.id === id);
