@@ -1,4 +1,5 @@
 // Rendering: tabs, list (windowed), detail pane, form sheet, menu.
+import * as api from './api.js';
 import { S, subscribe, context, setFields, flagRow, addRecord, chipOn, toggleChip, setPref, plantOptions, logout, refreshNow, setTablet } from './store.js';
 import { VIEWS, VBAR, viewById, CHIPS, isPlugSize, reasonKey } from './views.js';
 import { FORMS, PREFILL, FORM_DEFAULTS, readyDate } from './forms.js';
@@ -424,6 +425,12 @@ function openForm(id, prefill, opts = {}) {
   if (def.target === 'gfPlugLabels' || def.target === 'gfFinLabels') Object.assign(base, recentGet(base['Forecast #']) || {}, { 'Choose Plant': base['Choose Plant'] });
   const form = { fields: def.fields, userReady: !!prefill['Ready Date'] };
   openSheet({ title: def.title, fields: def.fields, values: base, form, onSave: vals => { recentPut(vals); addRecord(def.target, vals, opts.sentKey); if (opts.after) opts.after(); backToList(); } });
+  if (def.target === 'gfPlugLabels' && base['Forecast #'] && !base[def.fields[1].k]) { // pre-fill Quantity with the qty planted
+    api.call('qty', { fc: base['Forecast #'] }, S.user && S.user.token).then(r => {
+      const inp = r && r.qty !== '' && r.qty != null && document.querySelector('#overlay input[type=number]');
+      if (inp && inp.value === '') { inp.value = r.qty; inp.dispatchEvent(new Event('input', { bubbles: true })); }
+    }).catch(() => {});
+  }
 }
 
 // ---------------- chrome ----------------
