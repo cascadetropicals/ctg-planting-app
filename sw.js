@@ -1,5 +1,5 @@
 // Network-first app shell. Bump VERSION in js/config.js AND here on every release.
-const V = 'planting-v39';
+const V = 'planting-v40';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'app.css', 'main.js', 'ui.js', 'store.js', 'api.js', 'demo.js', 'forms.js', 'i18n.js', 'views.js', 'format.js', 'config.js',
   'figtree-latin-wght-normal.woff2', 'bricolage-grotesque-latin-wght-normal.woff2', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });

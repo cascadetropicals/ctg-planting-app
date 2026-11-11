@@ -122,7 +122,7 @@ function vendorRow(r) {
       h('span', { text: r['Vendor Name'] }), h('span', { class: 'sw' })));
 }
 // header like AppSheet: "Planting Plugs | wk 47 / 48" (the week text comes from the DD tab; shown only when it exists)
-const HEAD = { planIncoming: ['Planting Incoming URC/TC', 'Planting Incoming URC/TC'], planPlugs: ['Planting Plugs', 'Planting Plugs'], planFinished: ['Planting Finished', 'Planting Finished 2'], plant2in: ['2in Planting', 'Planting Finished 2'] };
+const HEAD = { planIncoming: ['Planting Incoming URC/TC', 'Incoming URC/TC'], planPlugs: ['Planting Plugs', 'Planting Plugs'], planFinished: ['Planting Finished', 'Planting Finished 2'], plant2in: ['2in Planting', 'Planting Finished 2'] };
 function viewTitle(v) {
   const hd = HEAD[v.id]; if (!hd) return v.name;
   const w = (S.L.weeks || {})[hd[1]]; return hd[0] + (w ? ' | ' + w : '');

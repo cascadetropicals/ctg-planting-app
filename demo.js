@@ -55,7 +55,7 @@ const load = () => { if (db) return db; try { db = JSON.parse(localStorage.getIt
 const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { /* ignore */ } };
 
 const lookups = () => ({
-  weeks: { 'Planting Incoming URC/TC': 'wk 45 / 46', 'Planting Plugs': 'wk 47 / 48', 'Planting Finished 2': 'wk 47 / 48' },
+  weeks: { 'Incoming URC/TC': 'wk 46', 'Planting Incoming URC/TC': 'wk 45 / 46', 'Planting Plugs': 'wk 47 / 48', 'Planting Finished 2': 'wk 47 / 48' },
   dd: ITEMS.flatMap(i => [{ d: i.g + ' ' + i.v, p: i.p, u: 1 + (i.p.length % 3), v: '', c: '', i: '' }]).concat(
     ITEMS.flatMap(i => ['4in', '6in', '8in'].map((s, n) => ({ d: i.g + ' ' + i.v + ' - ' + s, p: i.p, c: 'IC' + n, i: 'N' + i.p, b: '0' + i.p + n, u: '', v: '' })))),
   grow: ITEMS.map(i => ({ p: i.g + ' ' + i.v, w: 8, s: 6 })),
