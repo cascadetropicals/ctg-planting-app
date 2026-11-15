@@ -1,18 +1,21 @@
 import { CONFIG } from './config.js';
-import { S, login, loadAll, start, subscribe, setTablet } from './store.js';
-import { mount, refreshUI, translateStatic, applyLang } from './ui.js';
+import { S, login, loadAll, start, subscribe, setTablet, presence, logout } from './store.js';
+import { mount, refreshUI, translateStatic, applyLang, askDuplicate } from './ui.js';
 import { t } from './i18n.js';
 import { isDemo, call } from './api.js';
 
 const $ = s => document.querySelector(s);
 let mounted = false;
 
-async function enter() {
+async function enter(fresh) {
   $('#login').hidden = true; $('#app').hidden = false;
   if (!mounted) { mount(); mounted = true; }
   refreshUI();
   try { await loadAll(); } catch (e) { if (e.auth) return showLogin(); }
   refreshUI(); start();
+  const p = await presence(fresh ? 'login' : 'ping'); // who else is logged in with this account today?
+  const mine = (p.users || []).find(u => u.me);
+  if (fresh && mine && mine.dup) askDuplicate((p.users || []).filter(u => !u.me && u.acct === mine.acct), mine, logout);
 }
 function showLogin(msg) {
   $('#app').hidden = true; $('#login').hidden = false; $('#loginErr').textContent = msg || '';
@@ -20,7 +23,7 @@ function showLogin(msg) {
 }
 $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault(); const go = $('#loginGo'); go.disabled = true; $('#loginErr').textContent = '';
-  try { if (!$('#tabRow').hidden) setTablet($('#loginTab').value); await login($('#loginName').value); await enter(); }
+  try { if (!$('#tabRow').hidden) setTablet($('#loginTab').value); await login($('#loginName').value); await enter(true); }
   catch (er) { $('#loginErr').textContent = er.net ? t('No connection. Try again.') : (er.message || t('Could not sign in')); }
   go.disabled = false;
 });
@@ -42,7 +45,7 @@ async function setupGoogle() {
       const name = $('#loginName').value.trim();
       if (!name) { $('#loginErr').textContent = t('Please enter your name first, then sign in with Google.'); return; }
       $('#loginErr').textContent = '';
-      try { await login(name, r.credential); await enter(); }
+      try { await login(name, r.credential); await enter(true); }
       catch (er) { $('#loginErr').textContent = er.net ? t('No connection. Try again.') : (er.message || t('Could not sign in')); }
     } });
     window.google.accounts.id.renderButton($('#gbtn'), { theme: 'filled_blue', size: 'large', text: 'signin_with', width: 280 });

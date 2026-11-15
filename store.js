@@ -110,7 +110,20 @@ export async function login(name, idToken) {
   return S.user;
 }
 export const setTablet = e => { S.tablet = e; LS.set('ctg_tablet', e); emit('data'); };
-export function logout() { S.user = null; LS.set('ctg_user', null); S.tables = {}; S.loaded = false; stop(); emit('auth'); }
+// ---------- current users (duplicate login check) ----------
+const DEV = (() => { let d = LS.get('ctg_dev', ''); if (!d) { d = uid(); LS.set('ctg_dev', d); } return d; })();
+S.pres = { users: [] };
+export async function presence(mode) {
+  if (!S.user || api.isDemo()) return S.pres;
+  try {
+    const r = await api.call('presence', { dev: DEV, mode: mode || 'ping', email: S.user.email || S.tablet || '' }, S.user.token);
+    if (r && r.users) { S.pres = r; emit('data'); }
+  } catch (e) { if (e.auth) throw e; }
+  return S.pres;
+}
+export const myDup = () => (S.pres.users || []).find(u => u.me && u.dup);
+export function logout() {
+  if (S.user && !api.isDemo()) { api.call('presence', { dev: DEV, mode: 'out' }, S.user.token).catch(() => {}); } S.user = null; LS.set('ctg_user', null); S.tables = {}; S.loaded = false; stop(); emit('auth'); }
 
 // ---------- edits ----------
 function enqueue(op) {
@@ -163,6 +176,7 @@ async function poll() {
   try {
     const r = await api.call('ping', {}, S.user.token);
     if (r.seq != null && r.seq !== S.seq) await loadAll();
+    await presence('ping');
     if (S.status === 'offline') setStatus('saved');
   } catch (e) { if (e.auth) logout(); else setStatus('offline'); }
 }

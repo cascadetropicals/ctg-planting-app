@@ -208,3 +208,16 @@ button{cursor:pointer}
 .row .t2 .subs{min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row .t2 .tag{flex:0 0 auto}
 .quick.small{padding:6px 10px;font-size:13px;min-height:36px}
+
+.dupbar{background:var(--red);color:#fff;padding:10px 14px;font-weight:700;font-size:14px;line-height:1.3;cursor:pointer}
+.dupbar small{display:block;font-weight:500;opacity:.95}
+.urow{display:flex;flex-direction:column;gap:2px;padding:12px 16px;border-bottom:1px solid var(--line-2)}
+.urow b{font-size:16px}.urow span{font-size:13px;color:var(--ink-2)}
+.urow.dup{background:var(--red-tint);border-left:5px solid var(--red)}
+.urow.dup b,.urow.dup .dtag{color:var(--red)}
+.dtag{font-weight:700;font-size:13px}
+
+.thumbs{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
+.thumb{position:relative;width:96px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;color:var(--ink-2)}
+.thumb img{width:96px;height:128px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.thumb .icon-btn{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border-radius:999px}

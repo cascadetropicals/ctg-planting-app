@@ -1,6 +1,6 @@
 // Rendering: tabs, list (windowed), detail pane, form sheet, menu.
 import * as api from './api.js';
-import { S, subscribe, context, setFields, flagRow, addRecord, chipOn, toggleChip, setPref, plantOptions, logout, refreshNow, setTablet } from './store.js';
+import { S, subscribe, context, setFields, flagRow, addRecord, chipOn, toggleChip, setPref, plantOptions, logout, refreshNow, setTablet, presence, myDup } from './store.js';
 import { VIEWS, VBAR, viewById, CHIPS, isPlugSize, reasonKey } from './views.js';
 import { FORMS, PREFILL, FORM_DEFAULTS, readyDate } from './forms.js';
 import { fmtDate, fmtDateTime, fmtNum, norm, esc, nowStamp, usWeek, todayISO } from './format.js';
@@ -262,7 +262,64 @@ function renderVbar() {
     bar.append(h('button', { class: 'btn primary emp' + (ok ? '' : ' warn'), type: 'button', onclick: () => cfg.start.length === 1 ? START[cfg.start[0]].run() : choose('Empieza – start work', 'Tap this every time you start again: morning, after break, lunch, pulling or other work. It is saved right away with your name.', cfg.start.map(k => START[k])) },
       h('b', { text: 'Empieza' }), h('small', { text: st })));
   }
+  if (cfg.slip) bar.append(h('button', { class: 'btn', type: 'button', onclick: showSlip }, '📷 ' + t('Packing slip photo')));
   if (cfg.add) bar.append(h('button', { class: 'btn', type: 'button', onclick: () => cfg.add.length === 1 ? ADD[cfg.add[0]].run() : choose('Add a planting record', 'For plants that are not in the list.', cfg.add.map(k => ADD[k])) }, '+ Addition'));
+}
+
+// ---------------- packing slip photos ----------------
+// Pictures are shrunk on the device (about 1800 px, JPEG) and sent one page at a time to the backend, which files them in the Drive folder.
+async function shrink(file) {
+  const bmp = await createImageBitmap(file), k = Math.min(1, 1800 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.82);
+}
+function showSlip() {
+  const ov = $('#overlay'), close = () => { ov.hidden = true; ov.textContent = ''; document.body.style.overflow = ''; };
+  const pages = []; let busy = false, id = '', sent = 0;
+  const vendors = (S.tables.vendors || []).map(v => v['Vendor Name']).filter(Boolean).sort((a, b) => String(a).localeCompare(String(b)));
+  const sel = h('select', { id: 'slipVendor' }, h('option', { value: '', text: t('Choose vendor…') }), vendors.map(v => h('option', { value: v, text: v })));
+  const wk = h('input', { id: 'slipWeek', type: 'number', inputmode: 'numeric', min: '1', max: '53', value: String(usWeek(todayISO())) });
+  const cam = h('input', { type: 'file', accept: 'image/*', capture: 'environment', hidden: true });
+  const thumbs = h('div', { class: 'thumbs' }), msg = h('p', { class: 'err', role: 'alert' });
+  const save = h('button', { class: 'btn primary', type: 'button', disabled: true }, t('Save packing slip'));
+  const snap = h('button', { class: 'btn primary big', type: 'button', onclick: () => cam.click() }, '📷 ' + t('Take photo'));
+  const draw = () => {
+    thumbs.textContent = '';
+    pages.forEach((p, i) => thumbs.append(h('div', { class: 'thumb' }, h('img', { src: p, alt: t('Page') + ' ' + (i + 1) }), h('span', { text: t('Page') + ' ' + (i + 1) }),
+      h('button', { class: 'icon-btn sm', type: 'button', 'aria-label': 'Remove', onclick: () => { if (!busy) { pages.splice(i, 1); draw(); } } }, '✕'))));
+    snap.textContent = '📷 ' + t(pages.length ? 'Add another page' : 'Take photo'); save.disabled = busy || !pages.length;
+  };
+  cam.addEventListener('change', async () => {
+    const f = cam.files && cam.files[0]; cam.value = ''; if (!f) return; msg.textContent = '';
+    try { pages.push(await shrink(f)); draw(); } catch (e) { msg.textContent = t('Could not read the photo. Try again.'); }
+  });
+  save.addEventListener('click', async () => {
+    msg.textContent = '';
+    if (!sel.value) { msg.textContent = t('Choose the vendor first.'); return; }
+    const w = Number(wk.value); if (!(w >= 1 && w <= 53)) { msg.textContent = t('Week must be 1 to 53.'); return; }
+    busy = true; save.disabled = true; snap.disabled = true;
+    try {
+      while (pages.length) {
+        save.textContent = t('Sending') + ' ' + (sent + 1) + '…';
+        const r = await api.call('slip', { vendor: sel.value, week: w, page: sent + 1, slipId: id, data: pages[0] }, S.user.token);
+        if (!r || r.error) throw new Error((r && r.error) || 'error');
+        id = r.slipId; sent++; pages.shift(); sel.disabled = true; wk.disabled = true;
+      }
+      close(); toast(t('✓ Packing slip saved') + ' – ' + id + ' (' + sent + ')');
+    } catch (e) {
+      busy = false; snap.disabled = false; save.textContent = t('Save packing slip');
+      msg.textContent = (e.net ? t('No connection. Try again.') : e.message) + (sent ? ' ' + t('Pages already sent') + ': ' + sent + ' (' + id + ')' : '');
+      draw();
+    }
+  });
+  const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' },
+    h('header', {}, h('h2', { text: t('Packing slip photo') }), h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', onclick: () => { if (!busy) close(); } }, '✕')),
+    h('div', { class: 'body', style: 'padding:12px 14px' },
+      h('p', { class: 'hint', text: t('Take a picture of every page of the packing slip when you open the boxes.') }),
+      h('label', { class: 'fld' }, h('span', { text: t('Vendor') }), sel), h('label', { class: 'fld' }, h('span', { text: t('Arrival week') }), wk),
+      thumbs, cam, snap, msg), h('footer', {}, save));
+  ov.textContent = ''; ov.append(sheet); ov.hidden = false; document.body.style.overflow = 'hidden'; draw();
 }
 
 // ---------------- actions ----------------
@@ -447,6 +504,34 @@ function renderPill() {
   $('#pillText').textContent = t(PILL[S.status]) + (S.status === 'offline' && S.queue.length ? ' (' + S.queue.length + ')' : '');
   p.title = S.lastErr || '';
 }
+// ---------- current users / duplicate login ----------
+const hmPT = ms => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+export function askDuplicate(others, mine, signOut) {
+  const who = others.map(u => u.name + ' (since ' + hmPT(u.since) + ')').join(', ');
+  choose(t('This account is already logged in'), (mine.email ? mine.email + ' – ' : '') + t('already logged in on another device today') + ': ' + who + '. ' + t('Continue anyway?'),
+    [{ label: t('Yes, continue'), run: () => {} }, { label: t('No, sign out'), run: () => signOut() }]);
+}
+export function showUsers() {
+  const ov = $('#overlay'), close = () => { ov.hidden = true; ov.textContent = ''; document.body.style.overflow = ''; };
+  const draw = () => {
+    const us = (S.pres && S.pres.users) || [], body = ov.querySelector('.body'); if (!body) return; body.textContent = '';
+    if (!us.length) body.append(h('p', { class: 'hint', text: t('No one logged in yet today.') }));
+    us.forEach(u => body.append(h('div', { class: 'urow' + (u.dup ? ' dup' : '') },
+      h('b', { text: u.name + (u.me ? ' (' + t('you') + ')' : '') }), h('span', { text: u.email || t('no Google account set') }),
+      h('span', { text: t('Logged in') + ' ' + hmPT(u.since) + ' · ' + t('last seen') + ' ' + hmPT(u.last) }),
+      u.dup ? h('span', { class: 'dtag', text: '⚠ ' + t('Same account logged in on more than one device') }) : null)));
+  };
+  const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' },
+    h('header', {}, h('h2', { text: t('Current users') }), h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', onclick: close }, '✕')),
+    h('div', { class: 'body' }));
+  ov.textContent = ''; ov.append(sheet); ov.hidden = false; document.body.style.overflow = 'hidden'; ov.onclick = e => { if (e.target === ov) close(); };
+  draw(); presence('ping').then(draw);
+}
+function renderDup() {
+  const b = $('#dupbar'); if (!b) return; const d = myDup();
+  b.hidden = !d; b.textContent = '';
+  if (d) { const o = (S.pres.users || []).filter(u => !u.me && u.acct === d.acct); b.append(t('⚠ This account is logged in on more than one device'), h('small', { text: o.map(u => u.name + ' · ' + hmPT(u.since)).join(', ') + ' – ' + t('tap to see') })); b.onclick = showUsers; }
+}
 export function openMenu() {
   const m = $('#menu'); m.textContent = '';
   m.append(h('div', { class: 'info', text: tSignedIn(S.user ? S.user.name : '') }));
@@ -454,6 +539,7 @@ export function openMenu() {
   else if (((S.L.lists || {}).tabletEmail || []).length) m.append(h('button', { type: 'button', onclick: () => { m.hidden = true; askTablet(true); } }, tTablet(S.tablet)));
   if (S.lastErr) m.append(h('div', { class: 'errl', text: S.lastErr }));
   m.append(h('button', { type: 'button', onclick: () => { m.hidden = true; applyLang(getLang() === 'es' ? 'en' : 'es'); } }, t('Language') + ': ' + (getLang() === 'es' ? 'Español → English' : 'English → Español')),
+    h('button', { type: 'button', onclick: () => { m.hidden = true; showUsers(); } }, t('Current users')),
     h('button', { type: 'button', onclick: () => { m.hidden = true; refreshNow(); } }, 'Refresh now'),
     h('button', { type: 'button', onclick: () => { m.hidden = true; logout(); } }, 'Switch user'));
   m.hidden = false;
@@ -465,7 +551,7 @@ function renderWho() {
   if (S.user) w.append(h('b', { text: S.user.name }), mail ? h('span', { text: mail }) : h('span', { class: 'warn', text: t('no Google account set') }));
 }
 let rafR = 0;
-function renderAll() { renderWho(); computeCounts(); renderTabs(); renderChips(); renderList(); renderDetail(); renderPill(); const u = S.user && S.user.name; $('#userInit').textContent = u ? u[0].toUpperCase() : '?'; }
+function renderAll() { renderWho(); renderDup(); computeCounts(); renderTabs(); renderChips(); renderList(); renderDetail(); renderPill(); const u = S.user && S.user.name; $('#userInit').textContent = u ? u[0].toUpperCase() : '?'; }
 export function mount() {
   $('#search').addEventListener('input', e => { U.q = e.target.value; U.limit = 60; $('#clearSearch').hidden = !U.q; renderList(); });
   $('#clearSearch').addEventListener('click', () => { U.q = ''; $('#search').value = ''; $('#clearSearch').hidden = true; renderList(); });

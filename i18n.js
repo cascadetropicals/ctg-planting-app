@@ -38,6 +38,14 @@ const ES = {
   'From': 'Origen', 'Finished size': 'Terminada', 'Less': 'Menos', 'More': 'Más', 'Asst': 'Surtido', 'Vendor': 'Proveedor',
   'no Google account set': 'sin cuenta de Google',
   'Please fill: ': 'Por favor completa: ',
+  // packing slip
+  'Packing slip photo': 'Foto de la hoja de empaque', 'Choose vendor…': 'Elegir proveedor…', 'Save packing slip': 'Guardar hoja de empaque', 'Take photo': 'Tomar foto', 'Add another page': 'Agregar otra página', 'Page': 'Página',
+  'Could not read the photo. Try again.': 'No se pudo leer la foto. Intenta otra vez.', 'Choose the vendor first.': 'Elige primero el proveedor.', 'Week must be 1 to 53.': 'La semana debe ser de 1 a 53.', 'Sending': 'Enviando', '✓ Packing slip saved': '✓ Hoja de empaque guardada', 'Pages already sent': 'Páginas ya enviadas',
+  'Take a picture of every page of the packing slip when you open the boxes.': 'Toma una foto de cada página de la hoja de empaque al abrir las cajas.', 'Vendor': 'Proveedor', 'Arrival week': 'Semana de llegada',
+  // current users
+  'Current users': 'Usuarios actuales', 'This account is already logged in': 'Esta cuenta ya está conectada', 'already logged in on another device today': 'ya conectada en otro dispositivo hoy', 'Continue anyway?': '¿Continuar de todos modos?', 'Yes, continue': 'Sí, continuar', 'No, sign out': 'No, cerrar sesión',
+  'No one logged in yet today.': 'Nadie ha iniciado sesión hoy.', 'you': 'tú', 'Logged in': 'Conectado', 'last seen': 'visto', 'Same account logged in on more than one device': 'La misma cuenta está conectada en más de un dispositivo',
+  '⚠ This account is logged in on more than one device': '⚠ Esta cuenta está conectada en más de un dispositivo', 'tap to see': 'toca para ver',
   // Empieza + alerts
   'not yet today': 'aún no hoy', 'Starting work?': '¿Empiezas a trabajar?', 'Back from lunch?': '¿Regresaste del almuerzo?',
   'Tap Empieza now to start your day, so your work time is recorded correctly.': 'Toca Empieza ahora para comenzar tu día y que tu tiempo de trabajo se registre bien.',
