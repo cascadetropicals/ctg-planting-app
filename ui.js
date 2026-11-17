@@ -288,6 +288,8 @@ function showSlip() {
   const isLast = v => [...lastWk].some(n => norm(n) === norm(v));
   const sel = h('select', { id: 'slipVendor' }, h('option', { value: '', text: t('Choose vendor…') }), vendors.map(v => h('option', { value: v, text: v + (isLast(v) ? ' · ' + t('Last week').toLowerCase() : '') })));
   const wk = h('input', { id: 'slipWeek', type: 'number', inputmode: 'numeric', min: '1', max: '53', value: String(usWeek(todayISO())) });
+  // Choosing a vendor that only has last week's unplanted rows switches the week to last week (still editable)
+  sel.addEventListener('change', () => { if (sel.value) wk.value = String(isLast(sel.value) && !C.confirmed.has(String(sel.value).trim().toLowerCase()) ? usWeek(lastWeekISO()) : usWeek(todayISO())); });
   const cam = h('input', { type: 'file', accept: 'image/*', capture: 'environment', hidden: true });
   const thumbs = h('div', { class: 'thumbs' }), msg = h('p', { class: 'err', role: 'alert' });
   const save = h('button', { class: 'btn primary', type: 'button', disabled: true }, t('Save packing slip'));
