@@ -1,4 +1,4 @@
-import { addDays, isoWeek, norm } from './format.js';
+import { addDays, isoWeek, norm, todayISO } from './format.js';
 
 export const PLUG_SIZES = ['50', '72', '105'];
 export const isPlugSize = s => PLUG_SIZES.includes(String(s).trim());
@@ -20,7 +20,7 @@ const ok15 = (r, C) => r['Plant Date'] >= addDays(C.today, -15);
 const audit = (r, C) => r['Plant Date'] < addDays(C.today, -15) && r['Plant Date'] >= addDays(C.today, -45);
 
 const SLICES = {
-  planIncoming: (r, C) => r['Incoming Week'] === C.week && blank(r['Reason why not planted']) && C.confirmed.has(lc(r.Vendor)),
+  planIncoming: (r, C) => (r['Incoming Week'] === C.week || (r['Incoming Week'] === C.prevWeek && !r['Planted on App'])) && blank(r['Reason why not planted']) && C.confirmed.has(lc(r.Vendor)),
   incAudit: (r, C) => r['Incoming Week'] === C.week - 1 && !r['Planted on App'] && blank(r['Reason why not planted']),
   urcPrio: (r, C) => r['Incoming Week'] === C.week && blank(r['Reason why not planted']) && C.urcVendors.map(lc).includes(lc(r.Vendor)),
   flagPlugs: r => r['From Contain'] === 'Cutting' && Number(r['Inputs on Order']) <= Number(r.Goal),
@@ -56,6 +56,8 @@ const SLICES = {
 };
 
 // sort comparators (AppSheet "Sort by")
+// last week's leftovers (not planted yet) go on top of the Planting Incoming list
+const lastWeekFirst = r => (!r['Planted on App'] && r['Incoming Week'] === isoWeek(addDays(todayISO(), -7))) ? 0 : 1;
 const byPlantedGenus = (a, b) => cmpBool(a['Planted on App'], b['Planted on App']) || cmpStr(a.Genus, b.Genus);
 const byTransGenus = (a, b) => cmpBool(a.Transferred, b.Transferred) || cmpStr(a.Genus, b.Genus);
 const byPrio = (a, b) => (a._prio - b._prio) || byPlantedGenus(a, b);
@@ -70,7 +72,7 @@ const ALL_VIEWS = [
   { id: 'incVendors', name: 'Incoming URC/TC', kind: 'vendors' },
   { id: 'urcPrio', name: 'URC Priority', kind: 'urc', table: 'incoming', slice: SLICES.urcPrio, sort: byPrio,
     cols: ['URC Priority', 'Genus', 'Variety', 'Loc', 'Goal', 'Vendor'], sub: ['Vendor', 'Goal', 'Loc'], vendorPicker: true },
-  { id: 'planIncoming', name: 'Planting Incoming URC/TC', table: 'incoming', slice: SLICES.planIncoming, sort: byPlantedGenus,
+  { id: 'planIncoming', name: 'Planting Incoming URC/TC', table: 'incoming', slice: SLICES.planIncoming, sort: (a, b) => (lastWeekFirst(a) - lastWeekFirst(b)) || byPlantedGenus(a, b),
     cols: ['Size', 'Genus', 'Variety', 'Goal', 'QCell', 'Qty of flats', 'From Contain', 'Vendor', 'ToContain', 'Incoming Week', 'Plant Date', 'Reason why not planted', 'Plant Week', 'Ready Week', 'Forecast #', 'Timestamp'],
     sub: ['Vendor', 'Goal', 'From Contain', 'Plant Date'], actions: ['plantInc', 'labelInc'], video: true },
   { id: 'incAudit', name: 'Incoming Audit', table: 'incoming', slice: SLICES.incAudit, sort: byPlantedGenus,

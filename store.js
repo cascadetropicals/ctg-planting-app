@@ -195,5 +195,6 @@ export const refreshNow = async () => { try { await flush(); await loadAll(); se
 export const context = () => {
   const today = todayISO();
   const conf = new Set((S.tables.vendors || []).filter(v => v.VendorConfirmed).map(v => norm(v['Vendor Name'])));
-  return { today, week: isoWeek(today), confirmed: conf, on: chipOn, urcVendors: S.prefs.urc || [] };
+  const wkAgo = new Date(today + 'T12:00:00Z'); wkAgo.setUTCDate(wkAgo.getUTCDate() - 7);
+  return { today, week: isoWeek(today), prevWeek: isoWeek(wkAgo.toISOString().slice(0, 10)), confirmed: conf, on: chipOn, urcVendors: S.prefs.urc || [] };
 };

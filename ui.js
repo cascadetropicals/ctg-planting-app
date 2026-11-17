@@ -3,7 +3,7 @@ import * as api from './api.js';
 import { S, subscribe, context, setFields, flagRow, addRecord, chipOn, toggleChip, setPref, plantOptions, logout, refreshNow, setTablet, presence, myDup } from './store.js';
 import { VIEWS, VBAR, viewById, CHIPS, isPlugSize, reasonKey } from './views.js';
 import { FORMS, PREFILL, FORM_DEFAULTS, readyDate } from './forms.js';
-import { fmtDate, fmtDateTime, fmtNum, norm, esc, nowStamp, usWeek, todayISO } from './format.js';
+import { fmtDate, fmtDateTime, fmtNum, norm, esc, nowStamp, usWeek, todayISO, addDays } from './format.js';
 import { t, getLang, setLang, tItems, tSignedIn, tGoogle, tTablet, tTitle, tAgain, tSaved } from './i18n.js';
 
 const $ = s => document.querySelector(s);
@@ -91,9 +91,11 @@ function renderChips() {
   }
   el.hidden = !el.childElementCount;
 }
+const lastWeekISO = () => addDays(todayISO(), -7);
 function rowEl(v, r) {
   const subs = (v.sub || []).map(c => show(c, r[c])).filter(Boolean);
   const tags = [];
+  if (v.id === 'planIncoming' && !r['Planted on App'] && r['Incoming Week'] === context().prevWeek) tags.push(h('span', { class: 'tag orange', text: t('Last week') + ' · wk ' + usWeek(lastWeekISO()) }));
   if (r['Planted on App']) tags.push(h('span', { class: 'tag green', text: 'Planted' }));
   if (r['Flagged on App'] || r.Flagged) tags.push(h('span', { class: 'tag green', text: 'Flagged' }));
   if (r.Transferred) tags.push(h('span', { class: 'tag blue', text: 'Transferred' }));
@@ -529,7 +531,7 @@ export function showUsers() {
 }
 function renderDup() {
   const b = $('#dupbar'); if (!b) return; const d = myDup();
-  b.hidden = !d; b.textContent = '';
+  b.hidden = !d; b.textContent = ''; const ap = $('#app'); if (ap) ap.classList.toggle('hasdup', !!d);
   if (d) { const o = (S.pres.users || []).filter(u => !u.me && u.acct === d.acct); b.append(t('⚠ This account is logged in on more than one device'), h('small', { text: o.map(u => u.name + ' · ' + hmPT(u.since)).join(', ') + ' – ' + t('tap to see') })); b.onclick = showUsers; }
 }
 export function openMenu() {
