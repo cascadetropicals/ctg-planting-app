@@ -1,7 +1,7 @@
 // Rendering: tabs, list (windowed), detail pane, form sheet, menu.
 import * as api from './api.js';
 import { S, subscribe, context, setFields, flagRow, addRecord, chipOn, toggleChip, setPref, plantOptions, logout, refreshNow, setTablet, presence, myDup } from './store.js';
-import { VIEWS, VBAR, viewById, CHIPS, isPlugSize, reasonKey } from './views.js';
+import { VIEWS, VBAR, viewById, CHIPS, isPlugSize, reasonKey, recentTs } from './views.js';
 import { FORMS, PREFILL, FORM_DEFAULTS, readyDate } from './forms.js';
 import { fmtDate, fmtDateTime, fmtNum, norm, esc, nowStamp, usWeek, todayISO, addDays } from './format.js';
 import { t, getLang, setLang, tItems, tSignedIn, tGoogle, tTablet, tTitle, tAgain, tSaved } from './i18n.js';
@@ -279,8 +279,14 @@ async function shrink(file) {
 function showSlip() {
   const ov = $('#overlay'), close = () => { ov.hidden = true; ov.textContent = ''; document.body.style.overflow = ''; };
   const pages = []; let busy = false, id = '', sent = 0;
-  const vendors = (S.tables.vendors || []).map(v => v['Vendor Name']).filter(Boolean).sort((a, b) => String(a).localeCompare(String(b)));
-  const sel = h('select', { id: 'slipVendor' }, h('option', { value: '', text: t('Choose vendor…') }), vendors.map(v => h('option', { value: v, text: v })));
+  // Vendor list = VendorList + vendors that still have unplanted rows from last week (so their slip can be photographed too)
+  const C = context(), lastWk = new Set();
+  (S.tables.incoming || []).forEach(r => { if (r.Vendor && r['Incoming Week'] === C.prevWeek && !r['Planted on App'] && !r['Reason why not planted'] && recentTs(r, C)) lastWk.add(String(r.Vendor).trim()); });
+  const names = new Map(); (S.tables.vendors || []).forEach(v => { const n = String(v['Vendor Name'] || '').trim(); if (n) names.set(norm(n), n); });
+  lastWk.forEach(n => { if (!names.has(norm(n))) names.set(norm(n), n); });
+  const vendors = [...names.values()].sort((a, b) => a.localeCompare(b));
+  const isLast = v => [...lastWk].some(n => norm(n) === norm(v));
+  const sel = h('select', { id: 'slipVendor' }, h('option', { value: '', text: t('Choose vendor…') }), vendors.map(v => h('option', { value: v, text: v + (isLast(v) ? ' · ' + t('Last week').toLowerCase() : '') })));
   const wk = h('input', { id: 'slipWeek', type: 'number', inputmode: 'numeric', min: '1', max: '53', value: String(usWeek(todayISO())) });
   const cam = h('input', { type: 'file', accept: 'image/*', capture: 'environment', hidden: true });
   const thumbs = h('div', { class: 'thumbs' }), msg = h('p', { class: 'err', role: 'alert' });
