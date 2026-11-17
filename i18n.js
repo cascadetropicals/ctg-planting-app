@@ -40,7 +40,7 @@ const ES = {
   'Please fill: ': 'Por favor completa: ',
   'Last week': 'Semana pasada',
   // packing slip
-  'Packing slip photo': 'Foto de la hoja de empaque', 'Choose vendor…': 'Elegir proveedor…', 'Save packing slip': 'Guardar hoja de empaque', 'Take photo': 'Tomar foto', 'Add another page': 'Agregar otra página', 'Page': 'Página',
+  'Packing slip photo': 'Foto de la hoja de empaque', 'since': 'desde', 'Choose vendor…': 'Elegir proveedor…', 'Save packing slip': 'Guardar hoja de empaque', 'Take photo': 'Tomar foto', 'Add another page': 'Agregar otra página', 'Page': 'Página',
   'Could not read the photo. Try again.': 'No se pudo leer la foto. Intenta otra vez.', 'Choose the vendor first.': 'Elige primero el proveedor.', 'Week must be 1 to 53.': 'La semana debe ser de 1 a 53.', 'Sending': 'Enviando', '✓ Packing slip saved': '✓ Hoja de empaque guardada', 'Pages already sent': 'Páginas ya enviadas',
   'Take a picture of every page of the packing slip when you open the boxes.': 'Toma una foto de cada página de la hoja de empaque al abrir las cajas.', 'Vendor': 'Proveedor', 'Arrival week': 'Semana de llegada',
   // current users

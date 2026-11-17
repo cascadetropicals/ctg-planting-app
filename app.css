@@ -225,3 +225,6 @@ button{cursor:pointer}
 .app.hasdup{grid-template-rows:var(--top-h) auto minmax(0,1fr) auto}
 .tag.orange{background:#fdecc8;color:#8a4b00}
 .icon-btn.user{position:relative}.icon-btn.user.alert::after{content:'';position:absolute;top:-2px;right:-2px;width:14px;height:14px;border-radius:50%;background:#e5231b;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+
+/* choice dialogs (duplicate login, tablet account): padding around text and buttons, buttons not edge to edge */
+.sheet .body.choices{display:grid;gap:10px;padding:14px 16px 16px}.sheet .body.choices .hint{margin:0 0 4px;padding:0}.sheet .body.choices .btn.choice{width:100%;margin:0}

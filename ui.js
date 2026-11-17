@@ -196,7 +196,7 @@ function choose(title, hint, opts) {
   const ov = $('#overlay'), close = () => { ov.hidden = true; ov.textContent = ''; document.body.style.overflow = ''; };
   const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' },
     h('header', {}, h('h2', { text: title }), h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', onclick: close }, '✕')),
-    h('div', { class: 'body' }, hint ? h('p', { class: 'hint', text: hint }) : null, opts.map(o => h('button', { class: 'btn primary big choice', type: 'button', onclick: () => { close(); o.run(); } }, o.label))));
+    h('div', { class: 'body choices' }, hint ? h('p', { class: 'hint', text: hint }) : null, opts.map(o => h('button', { class: 'btn primary big choice', type: 'button', onclick: () => { close(); o.run(); } }, o.label))));
   ov.textContent = ''; ov.append(sheet); ov.hidden = false; document.body.style.overflow = 'hidden'; ov.onclick = e => { if (e.target === ov) close(); };
 }
 // One tap: saves Empieza with the logged-in name (Employee) and email; no form.
@@ -515,7 +515,7 @@ function renderPill() {
 // ---------- current users / duplicate login ----------
 const hmPT = ms => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 export function askDuplicate(others, mine, signOut) {
-  const who = others.map(u => u.name + ' (since ' + hmPT(u.since) + ')').join(', ');
+  const who = others.map(u => u.name + ' (' + t('since') + ' ' + hmPT(u.since) + ')').join(', ');
   choose(t('This account is already logged in'), (mine.email ? mine.email + ' – ' : '') + t('already logged in on another device today') + ': ' + who + '. ' + t('Continue anyway?'),
     [{ label: t('Yes, continue'), run: () => {} }, { label: t('No, sign out'), run: () => signOut() }]);
 }
