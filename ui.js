@@ -532,6 +532,7 @@ export function showUsers() {
 function renderDup() {
   const b = $('#dupbar'); if (!b) return; const d = myDup();
   b.hidden = !d; b.textContent = ''; const ap = $('#app'); if (ap) ap.classList.toggle('hasdup', !!d);
+  const ub = $('#userBtn'); if (ub) { ub.classList.toggle('alert', !!d); ub.setAttribute('aria-label', t('User menu') + (d ? ' – ' + t('Same account logged in on more than one device') : '')); } // red dot on the account circle
   if (d) { const o = (S.pres.users || []).filter(u => !u.me && u.acct === d.acct); b.append(t('⚠ This account is logged in on more than one device'), h('small', { text: o.map(u => u.name + ' · ' + hmPT(u.since)).join(', ') + ' – ' + t('tap to see') })); b.onclick = showUsers; }
 }
 export function openMenu() {
@@ -564,7 +565,7 @@ export function mount() {
   subscribe(what => {
     if (what === 'status') return renderPill();
     cancelAnimationFrame(rafR); rafR = requestAnimationFrame(() => {
-      renderWho(); const top = $('#list').scrollTop; computeCounts(); renderTabs(); renderChips();
+      renderWho(); renderDup(); const top = $('#list').scrollTop; computeCounts(); renderTabs(); renderChips();
       const n = Math.max(U.limit, 60); U.limit = n; renderList(); $('#list').scrollTop = top; renderDetail(); renderPill();
     });
   });
