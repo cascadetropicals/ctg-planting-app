@@ -5,6 +5,10 @@ export const isPlugSize = s => PLUG_SIZES.includes(String(s).trim());
 const has = v => v !== '' && v != null && v !== false;
 const blank = v => !has(v);
 const lc = v => norm(v);
+// Year guard: week numbers repeat every year, so a row only counts when its Timestamp is within ~half a year of today.
+// Works across New Year (week 52 -> week 1). Unreadable/blank Timestamp = keep the row (never hide data).
+const tsDay = v => { const m = String(v || '').match(/(\d{4})-(\d{1,2})-(\d{1,2})/) || String(v || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (!m) return null; return m[0].includes('-') ? Date.UTC(+m[1], +m[2] - 1, +m[3]) / 864e5 : Date.UTC(+m[3], +m[1] - 1, +m[2]) / 864e5; };
+export const recentTs = (r, C) => { const d = tsDay(r.Timestamp); return d == null || Math.abs(d - Date.parse(C.today + 'T12:00:00Z') / 864e5) <= 180; };
 const cmpStr = (a, b) => lc(a).localeCompare(lc(b));
 const cmpBool = (a, b) => (a ? 1 : 0) - (b ? 1 : 0);
 
@@ -20,7 +24,7 @@ const ok15 = (r, C) => r['Plant Date'] >= addDays(C.today, -15);
 const audit = (r, C) => r['Plant Date'] < addDays(C.today, -15) && r['Plant Date'] >= addDays(C.today, -45);
 
 const SLICES = {
-  planIncoming: (r, C) => (r['Incoming Week'] === C.week || (r['Incoming Week'] === C.prevWeek && !r['Planted on App'])) && blank(r['Reason why not planted']) && C.confirmed.has(lc(r.Vendor)),
+  planIncoming: (r, C) => blank(r['Reason why not planted']) && recentTs(r, C) && ((r['Incoming Week'] === C.week && C.confirmed.has(lc(r.Vendor))) || (r['Incoming Week'] === C.prevWeek && !r['Planted on App'])),
   incAudit: (r, C) => r['Incoming Week'] === C.week - 1 && !r['Planted on App'] && blank(r['Reason why not planted']),
   urcPrio: (r, C) => r['Incoming Week'] === C.week && blank(r['Reason why not planted']) && C.urcVendors.map(lc).includes(lc(r.Vendor)),
   flagPlugs: r => r['From Contain'] === 'Cutting' && Number(r['Inputs on Order']) <= Number(r.Goal),
