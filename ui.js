@@ -363,7 +363,7 @@ function labelRun(r, v) {
   openForm(plug ? 'plugLabels' : 'finLabels', pre, { sentKey: sentKey(v.table, r, 'l') });
 }
 function reasonRun(r, v, title, col, list) {
-  openSheet({ title, fields: [{ k: col, label: col, type: 'enum', req: true, list }], values: { [col]: r[col] || '' },
+  openSheet({ title, fields: [{ k: col, label: col, type: 'enum', req: true, list }], values: { [col]: r[col] || (list === 'labelBy' && S.user ? S.user.name : '') },
     onSave: vals => { setFields(v.table, r, { [col]: vals[col] }); } });
 }
 
