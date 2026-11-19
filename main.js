@@ -31,17 +31,17 @@ $('#loginForm').addEventListener('submit', async e => {
 function nameStep(list) {
   const KEY = 'ctg_names'; try { if (list.length) localStorage.setItem(KEY, JSON.stringify(list)); else list = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { /* ignore */ }
   if (!list.length) { $('#gbox').hidden = false; return; }
-  const grid = $('#nameGrid'), inp = $('#loginName'); grid.textContent = '';
-  const pick = n => {
-    inp.value = n; grid.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.n === n)));
-    $('#nameRow').hidden = n !== null && !grid.querySelector('.other[aria-pressed=true]'); $('#gbox').hidden = !inp.value.trim();
-    $('#gHint').textContent = t('Sign in as') + ' ' + inp.value.trim(); $('#loginErr').textContent = '';
+  const sel = $('#nameSel'), inp = $('#loginName'); sel.textContent = '';
+  const add = (v, txt) => { const o = document.createElement('option'); o.value = v; o.textContent = txt; sel.append(o); };
+  add('', t('Choose your name…')); list.forEach(n => add(n, n)); add('__other', t('Other name…'));
+  const sync = () => { $('#gHint').textContent = t('Sign in as') + ' ' + inp.value.trim(); $('#gbox').hidden = !inp.value.trim(); $('#loginErr').textContent = ''; };
+  sel.onchange = () => {
+    if (sel.value === '__other') { inp.value = ''; $('#nameRow').hidden = false; inp.focus(); }
+    else { inp.value = sel.value; $('#nameRow').hidden = true; }
+    sync();
   };
-  for (const n of list) { const b = document.createElement('button'); b.type = 'button'; b.textContent = n; b.dataset.n = n; b.setAttribute('aria-pressed', 'false'); b.onclick = () => pick(n); grid.append(b); }
-  const o = document.createElement('button'); o.type = 'button'; o.className = 'other'; o.textContent = t('Other name…'); o.setAttribute('aria-pressed', 'false');
-  o.onclick = () => { grid.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', 'false')); o.setAttribute('aria-pressed', 'true'); inp.value = ''; $('#nameRow').hidden = false; $('#gbox').hidden = true; inp.focus(); };
-  inp.addEventListener('input', () => { $('#gbox').hidden = !inp.value.trim(); $('#gHint').textContent = t('Sign in as') + ' ' + inp.value.trim(); });
-  grid.append(o); $('#nameRow').hidden = true; $('#nameStep').hidden = false; $('#gbox').hidden = true;
+  inp.addEventListener('input', sync);
+  $('#nameRow').hidden = true; $('#nameStep').hidden = false; $('#gbox').hidden = true;
 }
 // Google sign-in (like AppSheet): shown only when the backend has a Client ID configured.
 async function setupGoogle() {

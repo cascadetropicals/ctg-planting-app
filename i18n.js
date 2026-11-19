@@ -60,7 +60,7 @@ const ES = {
   'Which Google account is this tablet signed in to?': '¿Con qué cuenta de Google está esta tableta?', 'Pick it once. It is saved with every record as the Email Address (like AppSheet did).': 'Elígela una vez. Se guarda con cada registro como Email Address (como hacía AppSheet).',
   'Your name': 'Tu nombre', 'Google account of this tablet': 'Cuenta de Google de esta tableta', 'Access code': 'Código de acceso', 'Continue': 'Continuar',
   'Choose account…': 'Elegir cuenta…', 'No connection. Try again.': 'Sin conexión. Inténtalo de nuevo.', 'Could not sign in': 'No se pudo iniciar sesión',
-  'Plant records for the greenhouse team': 'Registros de plantas del equipo del invernadero', 'Who is working?': '¿Quién está trabajando?', 'Other name…': 'Otro nombre…',
+  'Plant records for the greenhouse team': 'Registros de plantas del equipo del invernadero', 'Who is working?': '¿Quién está trabajando?', 'Other name…': 'Otro nombre…', 'Choose your name…': 'Elige tu nombre…',
   'Then sign in with Google': 'Ahora inicia sesión con Google', 'Sign in as': 'Entrar como',
   'Enter your name, then sign in with the Google account of this tablet.': 'Escribe tu nombre y luego inicia sesión con la cuenta de Google de esta tableta.',
   'Please enter your name first, then sign in with Google.': 'Primero escribe tu nombre y luego inicia sesión con Google.', 'e.g. Maria': 'p. ej. María'
