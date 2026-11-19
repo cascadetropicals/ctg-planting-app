@@ -151,6 +151,13 @@ button{cursor:pointer}
 .card input,.card select{color:var(--ink);width:100%;min-height:52px;padding:0 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--paper);font-size:17px;outline:0}
 .card input:focus,.card select:focus{border-color:var(--spruce)}
 .card .btn{width:100%}
+.card .sub{margin:-8px 0 0;color:var(--ink-3);font-size:14px;text-align:center}
+.card .step{width:100%;display:grid;gap:10px}.card .q{margin:0;font-weight:700;font-size:16px;text-align:center}
+.names{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;width:100%}
+.names button{min-height:52px;border-radius:12px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font:600 16px var(--font);padding:0 10px}
+.names button[aria-pressed=true]{background:var(--spruce);border-color:var(--spruce);color:var(--on-spruce)}
+.names button.other{grid-column:1/-1;background:transparent;border-style:dashed;color:var(--ink-2);font-weight:500}
+.card{box-shadow:0 10px 40px rgba(0,0,0,.08)}
 .err{color:var(--red);min-height:1.2em;margin:0;font-size:14px;font-weight:600}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 

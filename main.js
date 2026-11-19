@@ -27,6 +27,22 @@ $('#loginForm').addEventListener('submit', async e => {
   catch (er) { $('#loginErr').textContent = er.net ? t('No connection. Try again.') : (er.message || t('Could not sign in')); }
   go.disabled = false;
 });
+// Sign-in step 1: tap your name (list from the employee sheet, kept for offline); step 2: Google button.
+function nameStep(list) {
+  const KEY = 'ctg_names'; try { if (list.length) localStorage.setItem(KEY, JSON.stringify(list)); else list = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { /* ignore */ }
+  if (!list.length) { $('#gbox').hidden = false; return; }
+  const grid = $('#nameGrid'), inp = $('#loginName'); grid.textContent = '';
+  const pick = n => {
+    inp.value = n; grid.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.n === n)));
+    $('#nameRow').hidden = n !== null && !grid.querySelector('.other[aria-pressed=true]'); $('#gbox').hidden = !inp.value.trim();
+    $('#gHint').textContent = t('Sign in as') + ' ' + inp.value.trim(); $('#loginErr').textContent = '';
+  };
+  for (const n of list) { const b = document.createElement('button'); b.type = 'button'; b.textContent = n; b.dataset.n = n; b.setAttribute('aria-pressed', 'false'); b.onclick = () => pick(n); grid.append(b); }
+  const o = document.createElement('button'); o.type = 'button'; o.className = 'other'; o.textContent = t('Other name…'); o.setAttribute('aria-pressed', 'false');
+  o.onclick = () => { grid.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', 'false')); o.setAttribute('aria-pressed', 'true'); inp.value = ''; $('#nameRow').hidden = false; $('#gbox').hidden = true; inp.focus(); };
+  inp.addEventListener('input', () => { $('#gbox').hidden = !inp.value.trim(); $('#gHint').textContent = t('Sign in as') + ' ' + inp.value.trim(); });
+  grid.append(o); $('#nameRow').hidden = true; $('#nameStep').hidden = false; $('#gbox').hidden = true;
+}
 // Google sign-in (like AppSheet): shown only when the backend has a Client ID configured.
 async function setupGoogle() {
   if (isDemo()) return;
@@ -40,6 +56,7 @@ async function setupGoogle() {
       return;
     }
     if (!cfg || !cfg.googleClientId) return;
+    nameStep(cfg.names || []);
     await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = ok; s.onerror = no; document.head.append(s); });
     window.google.accounts.id.initialize({ client_id: cfg.googleClientId, auto_select: false, cancel_on_tap_outside: false, callback: async r => {
       const name = $('#loginName').value.trim();
@@ -49,7 +66,7 @@ async function setupGoogle() {
       catch (er) { $('#loginErr').textContent = er.net ? t('No connection. Try again.') : (er.message || t('Could not sign in')); }
     } });
     window.google.accounts.id.renderButton($('#gbtn'), { theme: 'filled_blue', size: 'large', text: 'signin_with', width: 280 });
-    $('#gbox').hidden = false; $('#loginGo').hidden = true;
+    $('#loginGo').hidden = true; if ($('#nameStep').hidden) $('#gbox').hidden = false;
   } catch (e) { /* no connection or blocked: keep the name-only login */ }
 }
 subscribe(w => { if (w === 'auth') showLogin(); });

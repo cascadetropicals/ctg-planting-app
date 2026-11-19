@@ -46,12 +46,14 @@
   <form class="card" id="loginForm" autocomplete="off">
     <div class="logo big" aria-hidden="true"></div>
     <h2>CTG Planting</h2>
+    <p class="sub" id="loginSub" data-t="Plant records for the greenhouse team">Plant records for the greenhouse team</p>
     <div class="langsw" role="group" aria-label="Language" data-ta="Language"><button type="button" data-lang="es" aria-pressed="true">Español</button><button type="button" data-lang="en" aria-pressed="false">English</button></div>
-    <label><span data-t="Your name">Your name</span><input id="loginName" required maxlength="40" autocomplete="name" placeholder="e.g. Maria" data-tp="e.g. Maria"></label>
+    <div id="nameStep" class="step" hidden><p class="q" data-t="Who is working?">Who is working?</p><div id="nameGrid" class="names"></div></div>
+    <label id="nameRow"><span data-t="Your name">Your name</span><input id="loginName" required maxlength="40" autocomplete="name" placeholder="e.g. Maria" data-tp="e.g. Maria"></label>
     <label id="tabRow" hidden><span data-t="Google account of this tablet">Google account of this tablet</span><select id="loginTab"></select></label>
     <label id="codeRow" hidden><span data-t="Access code">Access code</span><input id="loginCode" type="password" autocomplete="off" inputmode="text"></label>
     <p id="loginErr" class="err" role="alert"></p>
-    <div id="gbox" hidden><p class="hint" style="margin:0 0 10px" data-t="Enter your name, then sign in with the Google account of this tablet.">Enter your name, then sign in with the Google account of this tablet.</p><div id="gbtn" style="display:flex;justify-content:center"></div></div>
+    <div id="gbox" hidden><p class="hint" id="gHint" style="margin:0 0 10px;text-align:center" data-t="Then sign in with Google">Then sign in with Google</p><div id="gbtn" style="display:flex;justify-content:center"></div></div>
     <button class="btn primary" type="submit" id="loginGo" data-t="Continue">Continue</button>
   </form>
 </div>
