@@ -34,7 +34,7 @@ function nameStep(list) {
   const sel = $('#nameSel'), inp = $('#loginName'); sel.textContent = '';
   const add = (v, txt) => { const o = document.createElement('option'); o.value = v; o.textContent = txt; sel.append(o); };
   add('', t('Choose your name…')); list.forEach(n => add(n, n)); add('__other', t('Other name…'));
-  const sync = () => { $('#gHint').textContent = t('Sign in as') + ' ' + inp.value.trim(); $('#gbox').hidden = !inp.value.trim(); $('#loginErr').textContent = ''; };
+  const sync = () => { $('#gbox').hidden = !inp.value.trim(); $('#loginErr').textContent = ''; };
   sel.onchange = () => {
     if (sel.value === '__other') { inp.value = ''; $('#nameRow').hidden = false; inp.focus(); }
     else { inp.value = sel.value; $('#nameRow').hidden = true; }
@@ -65,7 +65,9 @@ async function setupGoogle() {
       try { await login(name, r.credential); await enter(true); }
       catch (er) { $('#loginErr').textContent = er.net ? t('No connection. Try again.') : (er.message || t('Could not sign in')); }
     } });
-    window.google.accounts.id.renderButton($('#gbtn'), { theme: 'filled_blue', size: 'large', text: 'signin_with', width: 280 });
+    const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const gw = Math.max(220, Math.min(380, ($('#loginForm').clientWidth || 340) - 44));
+    window.google.accounts.id.renderButton($('#gbtn'), { theme: dark ? 'filled_black' : 'outline', size: 'large', text: 'continue_with', shape: 'rectangular', logo_alignment: 'left', width: gw });
     $('#loginGo').hidden = true; if ($('#nameStep').hidden) $('#gbox').hidden = false;
   } catch (e) { /* no connection or blocked: keep the name-only login */ }
 }

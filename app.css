@@ -151,6 +151,7 @@ button{cursor:pointer}
 .card input,.card select{color:var(--ink);width:100%;min-height:52px;padding:0 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--paper);font-size:17px;outline:0}
 .card input:focus,.card select:focus{border-color:var(--spruce)}
 .card .btn{width:100%}
+#gbox{width:100%}#gbtn{display:flex;justify-content:center;color-scheme:light;min-height:44px}#gbtn iframe{color-scheme:light;background:transparent;border-radius:12px}
 .card .sub{margin:-8px 0 0;color:var(--ink-3);font-size:14px;text-align:center}
 .card .step{width:100%;display:grid;gap:10px}.card .q{margin:0;font-weight:700;font-size:16px;text-align:center}
 .names{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;width:100%}
