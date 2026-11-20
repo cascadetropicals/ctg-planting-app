@@ -62,6 +62,8 @@ const ES = {
   'Choose account…': 'Elegir cuenta…', 'No connection. Try again.': 'Sin conexión. Inténtalo de nuevo.', 'Could not sign in': 'No se pudo iniciar sesión',
   'Plant records for the greenhouse team': 'Registros de plantas del equipo del invernadero', 'Who is working?': '¿Quién está trabajando?', 'Other name…': 'Otro nombre…', 'Choose your name…': 'Elige tu nombre…',
   'Then sign in with Google': 'Ahora inicia sesión con Google', 'Sign in as': 'Entrar como',
+  'Other vendor (not in list)…': 'Otro proveedor (no está en la lista)…', 'Vendor name': 'Nombre del proveedor', 'This week': 'Esta semana', 'the vendor': 'el proveedor', 'the week': 'la semana',
+  'Are you sure you do not know': '¿Seguro que no sabes', 'and': 'y', 'Go back': 'Volver', 'Yes, upload anyway': 'Sí, subir de todos modos',
   'Enter your name, then sign in with the Google account of this tablet.': 'Escribe tu nombre y luego inicia sesión con la cuenta de Google de esta tableta.',
   'Please enter your name first, then sign in with Google.': 'Primero escribe tu nombre y luego inicia sesión con Google.', 'e.g. Maria': 'p. ej. María'
 };

@@ -236,3 +236,7 @@ button{cursor:pointer}
 
 /* choice dialogs (duplicate login, tablet account): padding around text and buttons, buttons not edge to edge */
 .sheet .body.choices{display:grid;gap:10px;padding:14px 16px 16px}.sheet .body.choices .hint{margin:0 0 4px;padding:0}.sheet .body.choices .btn.choice{width:100%;margin:0}
+
+.wkq{display:flex;gap:8px;margin:-4px 0 8px}.wkq button{flex:1;min-height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font-weight:600}
+.warnbox{margin-top:10px;padding:12px;border-radius:12px;background:var(--spruce-tint);border:1.5px solid var(--spruce)}.warnbox p{margin:0 0 10px;font-weight:700}
+.warnbox .row2{display:flex;gap:8px}.warnbox .row2 .btn{flex:1}

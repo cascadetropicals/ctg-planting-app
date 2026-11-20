@@ -279,17 +279,23 @@ async function shrink(file) {
 function showSlip() {
   const ov = $('#overlay'), close = () => { ov.hidden = true; ov.textContent = ''; document.body.style.overflow = ''; };
   const pages = []; let busy = false, id = '', sent = 0;
-  // Vendor list = VendorList + vendors that still have unplanted rows from last week (so their slip can be photographed too)
+  // Vendor list = VendorList + every vendor in Incoming_arrived; vendors with unplanted rows from last week are tagged
   const C = context(), lastWk = new Set();
   (S.tables.incoming || []).forEach(r => { if (r.Vendor && r['Incoming Week'] === C.prevWeek && !r['Planted on App'] && !r['Reason why not planted'] && recentTs(r, C)) lastWk.add(String(r.Vendor).trim()); });
   const names = new Map(); (S.tables.vendors || []).forEach(v => { const n = String(v['Vendor Name'] || '').trim(); if (n) names.set(norm(n), n); });
   lastWk.forEach(n => { if (!names.has(norm(n))) names.set(norm(n), n); });
+  // every vendor that ever appeared in Incoming_arrived (VendorList only holds a few), so slips of any vendor and any past week can be filed
+  (S.tables.incoming || []).forEach(r => { const n = String(r.Vendor || '').trim(); if (n && !names.has(norm(n))) names.set(norm(n), n); });
   const vendors = [...names.values()].sort((a, b) => a.localeCompare(b));
   const isLast = v => [...lastWk].some(n => norm(n) === norm(v));
-  const sel = h('select', { id: 'slipVendor' }, h('option', { value: '', text: t('Choose vendor…') }), vendors.map(v => h('option', { value: v, text: v + (isLast(v) ? ' · ' + t('Last week').toLowerCase() : '') })));
+  const sel = h('select', { id: 'slipVendor' }, h('option', { value: '', text: t('Choose vendor…') }), h('option', { value: '__other', text: t('Other vendor (not in list)…') }), vendors.map(v => h('option', { value: v, text: v + (isLast(v) ? ' · ' + t('Last week').toLowerCase() : '') })));
   const wk = h('input', { id: 'slipWeek', type: 'number', inputmode: 'numeric', min: '1', max: '53', value: String(usWeek(todayISO())) });
   // Choosing a vendor that only has last week's unplanted rows switches the week to last week (still editable)
   sel.addEventListener('change', () => { if (sel.value) wk.value = String(isLast(sel.value) && !C.confirmed.has(String(sel.value).trim().toLowerCase()) ? usWeek(lastWeekISO()) : usWeek(todayISO())); });
+  const other = h('input', { type: 'text', id: 'slipOther', maxlength: '60', placeholder: t('Vendor name'), autocomplete: 'off', hidden: true });
+  const wkBtns = h('div', { class: 'wkq' }, h('button', { type: 'button', onclick: () => { wk.value = String(usWeek(todayISO())); } }, t('This week')), h('button', { type: 'button', onclick: () => { wk.value = String(usWeek(lastWeekISO())); } }, t('Last week')));
+  sel.addEventListener('change', () => { other.hidden = sel.value !== '__other'; if (!other.hidden) other.focus(); });
+  const vendorVal = () => (sel.value === '__other' ? other.value.trim() : sel.value);
   const cam = h('input', { type: 'file', accept: 'image/*', capture: 'environment', hidden: true });
   const thumbs = h('div', { class: 'thumbs' }), msg = h('p', { class: 'err', role: 'alert' });
   const save = h('button', { class: 'btn primary', type: 'button', disabled: true }, t('Save packing slip'));
@@ -304,17 +310,14 @@ function showSlip() {
     const f = cam.files && cam.files[0]; cam.value = ''; if (!f) return; msg.textContent = '';
     try { pages.push(await shrink(f)); draw(); } catch (e) { msg.textContent = t('Could not read the photo. Try again.'); }
   });
-  save.addEventListener('click', async () => {
-    msg.textContent = '';
-    if (!sel.value) { msg.textContent = t('Choose the vendor first.'); return; }
-    const w = Number(wk.value); if (!(w >= 1 && w <= 53)) { msg.textContent = t('Week must be 1 to 53.'); return; }
+  const upload = async (vendor, w) => {
     busy = true; save.disabled = true; snap.disabled = true;
     try {
       while (pages.length) {
         save.textContent = t('Sending') + ' ' + (sent + 1) + '…';
-        const r = await api.call('slip', { vendor: sel.value, week: w, page: sent + 1, slipId: id, data: pages[0] }, S.user.token);
+        const r = await api.call('slip', { vendor, week: w, page: sent + 1, slipId: id, data: pages[0] }, S.user.token);
         if (!r || r.error) throw new Error((r && r.error) || 'error');
-        id = r.slipId; sent++; pages.shift(); sel.disabled = true; wk.disabled = true;
+        id = r.slipId; sent++; pages.shift(); sel.disabled = true; wk.disabled = true; other.disabled = true;
       }
       close(); toast(t('✓ Packing slip saved') + ' – ' + id + ' (' + sent + ')');
     } catch (e) {
@@ -322,13 +325,26 @@ function showSlip() {
       msg.textContent = (e.net ? t('No connection. Try again.') : e.message) + (sent ? ' ' + t('Pages already sent') + ': ' + sent + ' (' + id + ')' : '');
       draw();
     }
+  };
+  const confirmBox = h('div', { class: 'warnbox', hidden: true });
+  save.addEventListener('click', () => {
+    msg.textContent = ''; confirmBox.hidden = true;
+    const vendor = vendorVal(), w = Number(wk.value);
+    if (wk.value !== '' && !(w >= 1 && w <= 53)) { msg.textContent = t('Week must be 1 to 53.'); return; }
+    const missing = [!vendor ? t('the vendor') : '', wk.value === '' ? t('the week') : ''].filter(Boolean);
+    const go = () => { confirmBox.hidden = true; upload(vendor || 'Unknown', wk.value === '' ? 0 : w); };
+    if (!missing.length) return go();
+    confirmBox.textContent = '';
+    confirmBox.append(h('p', { text: t('Are you sure you do not know') + ' ' + missing.join(' ' + t('and') + ' ') + '?' }),
+      h('div', { class: 'row2' }, h('button', { class: 'btn', type: 'button', onclick: () => { confirmBox.hidden = true; } }, t('Go back')), h('button', { class: 'btn primary', type: 'button', onclick: go }, t('Yes, upload anyway'))));
+    confirmBox.hidden = false;
   });
   const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' },
     h('header', {}, h('h2', { text: t('Packing slip photo') }), h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', onclick: () => { if (!busy) close(); } }, '✕')),
     h('div', { class: 'body', style: 'padding:12px 14px' },
       h('p', { class: 'hint', text: t('Take a picture of every page of the packing slip when you open the boxes.') }),
-      h('label', { class: 'fld' }, h('span', { text: t('Vendor') }), sel), h('label', { class: 'fld' }, h('span', { text: t('Arrival week') }), wk),
-      thumbs, cam, snap, msg), h('footer', {}, save));
+      h('label', { class: 'fld' }, h('span', { text: t('Vendor') }), sel, other), h('label', { class: 'fld' }, h('span', { text: t('Arrival week') }), wk), wkBtns,
+      thumbs, cam, snap, msg, confirmBox), h('footer', {}, save));
   ov.textContent = ''; ov.append(sheet); ov.hidden = false; document.body.style.overflow = 'hidden'; draw();
 }
 
