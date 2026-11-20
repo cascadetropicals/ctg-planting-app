@@ -24,7 +24,7 @@ const ok15 = (r, C) => r['Plant Date'] >= addDays(C.today, -15);
 const audit = (r, C) => r['Plant Date'] < addDays(C.today, -15) && r['Plant Date'] >= addDays(C.today, -45);
 
 const SLICES = {
-  planIncoming: (r, C) => blank(r['Reason why not planted']) && recentTs(r, C) && ((r['Incoming Week'] === C.week && C.confirmed.has(lc(r.Vendor))) || (r['Incoming Week'] === C.prevWeek && !r['Planted on App'])),
+  planIncoming: (r, C) => blank(r['Reason why not planted']) && recentTs(r, C) && ((r['Incoming Week'] === C.week && (C.confirmed.has(lc(r.Vendor)) || r['Planted on App'])) || r['Incoming Week'] === C.prevWeek),
   incAudit: (r, C) => r['Incoming Week'] === C.week - 1 && !r['Planted on App'] && blank(r['Reason why not planted']),
   urcPrio: (r, C) => r['Incoming Week'] === C.week && blank(r['Reason why not planted']) && C.urcVendors.map(lc).includes(lc(r.Vendor)),
   flagPlugs: r => r['From Contain'] === 'Cutting' && Number(r['Inputs on Order']) <= Number(r.Goal),
@@ -76,7 +76,7 @@ const ALL_VIEWS = [
   { id: 'incVendors', name: 'Incoming URC/TC', kind: 'vendors' },
   { id: 'urcPrio', name: 'URC Priority', kind: 'urc', table: 'incoming', slice: SLICES.urcPrio, sort: byPrio,
     cols: ['URC Priority', 'Genus', 'Variety', 'Loc', 'Goal', 'Vendor'], sub: ['Vendor', 'Goal', 'Loc'], vendorPicker: true },
-  { id: 'planIncoming', name: 'Planting Incoming URC/TC', table: 'incoming', slice: SLICES.planIncoming, sort: (a, b) => (lastWeekFirst(a) - lastWeekFirst(b)) || byPlantedGenus(a, b),
+  { id: 'planIncoming', name: 'Planting Incoming URC/TC', table: 'incoming', slice: SLICES.planIncoming, sort: byPlantedGenus,
     cols: ['Size', 'Genus', 'Variety', 'Goal', 'QCell', 'Qty of flats', 'From Contain', 'Vendor', 'ToContain', 'Incoming Week', 'Plant Date', 'Reason why not planted', 'Plant Week', 'Ready Week', 'Forecast #', 'Timestamp'],
     sub: ['Vendor', 'Goal', 'From Contain', 'Plant Date'], actions: ['plantInc', 'labelInc'], video: true },
   { id: 'incAudit', name: 'Incoming Audit', table: 'incoming', slice: SLICES.incAudit, sort: byPlantedGenus,

@@ -1,10 +1,10 @@
 // Rendering: tabs, list (windowed), detail pane, form sheet, menu.
 import * as api from './api.js';
-import { S, subscribe, context, setFields, flagRow, addRecord, chipOn, toggleChip, setPref, plantOptions, logout, refreshNow, setTablet, presence, myDup } from './store.js';
+import { S, subscribe, context, setFields, flagRow, addRecord, ident, chipOn, toggleChip, setPref, plantOptions, logout, refreshNow, setTablet, presence, myDup } from './store.js';
 import { VIEWS, VBAR, viewById, CHIPS, isPlugSize, reasonKey, recentTs } from './views.js';
 import { FORMS, PREFILL, FORM_DEFAULTS, readyDate } from './forms.js';
 import { fmtDate, fmtDateTime, fmtNum, norm, esc, nowStamp, usWeek, todayISO, addDays } from './format.js';
-import { t, getLang, setLang, tItems, tSignedIn, tGoogle, tTablet, tTitle, tAgain, tSaved } from './i18n.js';
+import { t, getLang, setLang, tItems, tSignedIn, tGoogle, tTablet, tTitle, tAgain, tSaved, tLabelAgain } from './i18n.js';
 
 const $ = s => document.querySelector(s);
 export function h(tag, attrs, ...kids) {
@@ -41,7 +41,7 @@ function compute(v) {
   let rows = (S.tables[v.table] || []).filter(r => v.slice(r, C));
   const q = norm(U.q);
   if (q) rows = rows.filter(r => norm([r.Genus, r.Variety, r.Vendor, r.Size, r.Location, r['Forecast #'], r['Plant Date'], r['Plug Location']].join(' ')).includes(q));
-  return rows.sort(v.sort);
+  return rows.sort(v.sort).sort((a, b) => groupRank(v, a) - groupRank(v, b)); // stable: this week first, then last week, then older
 }
 function computeCounts() {
   const C = context(), c = {};
@@ -100,6 +100,7 @@ function rowEl(v, r) {
   if (r['Flagged on App'] || r.Flagged) tags.push(h('span', { class: 'tag green', text: 'Flagged' }));
   if (r.Transferred) tags.push(h('span', { class: 'tag blue', text: 'Transferred' }));
   if (r['Label added']) tags.push(h('span', { class: 'tag green', text: 'Label added' }));
+  const ls = labelSent(v, r); if (ls) tags.push(h('span', { class: 'tag blue', text: t('Labels sent') + ' ' + hhmm(ls.t) + (ls.by ? ' · ' + ls.by : '') }));
   const sz = r.Size || (v.kind === 'urc' ? (r['URC Priority'] || '–') : '');
   return h('div', { class: 'row' + (r['Planted on App'] || r['Flagged on App'] ? ' done' : ''), role: 'listitem', 'data-k': r._k, 'aria-selected': U.sel === r._k, onclick: () => select(r._k) },
     sz !== '' ? h('div', { class: 'sz', text: String(sz) }) : null,
@@ -151,11 +152,26 @@ function renderList() {
   if (!U.rows.length) { list.append(h('div', { class: 'empty' }, h('b', { text: 'Nothing here' }), h('p', { text: 'No items match this view right now.' }))); return; }
   appendRows(v);
 }
+// Planting screens: this week's records on top, last week's grouped below, anything older at the end
+const GROUPED = new Set(['planIncoming', 'planPlugs', 'planFinished', 'plant2in']);
+function groupOf(v, r) {
+  if (!GROUPED.has(v.id)) return 0; const C = context();
+  if (v.id === 'planIncoming') return r['Incoming Week'] === C.week ? 0 : r['Incoming Week'] === C.prevWeek ? 1 : 2;
+  const d = r['Plant Date']; if (!d) return 2;
+  const w = usWeek(d), tw = usWeek(todayISO());
+  return d > todayISO() || w === tw ? 0 : w === usWeek(lastWeekISO()) ? 1 : 2;
+}
+const groupRank = (v, r) => groupOf(v, r);
+const GROUP_NAME = ['This week', 'Last week', 'Earlier'];
 function appendRows(v) {
   const list = $('#list'); list.querySelector('.sentinel')?.remove();
   const start = list.querySelectorAll('.row').length, end = Math.min(U.rows.length, U.limit);
   const frag = document.createDocumentFragment();
-  for (let i = start; i < end; i++) frag.append(v.kind === 'vendors' ? vendorRow(U.rows[i]) : rowEl(v, U.rows[i]));
+  let lastG = start > 0 ? groupOf(v, U.rows[start - 1]) : -1;
+  for (let i = start; i < end; i++) {
+    if (v.kind !== 'vendors' && GROUPED.has(v.id)) { const g = groupOf(v, U.rows[i]); if (g !== lastG) { lastG = g; frag.append(h('div', { class: 'grp', role: 'presentation', text: t(GROUP_NAME[g]) })); } }
+    frag.append(v.kind === 'vendors' ? vendorRow(U.rows[i]) : rowEl(v, U.rows[i]));
+  }
   list.append(frag);
   if (end < U.rows.length) {
     const s = h('div', { class: 'sentinel' }); list.append(s);
@@ -350,7 +366,7 @@ function showSlip() {
 
 // ---------------- actions ----------------
 const MAIN_ACTIONS = ['plantInc', 'labelInc', 'plantPlug', 'labelPlug', 'plantFin', 'labelFin', 'flagPlug', 'flagFin', 'addLabels'];
-const sentKey = (t, r, k) => t + ':' + r._k + ':' + k;
+const sentKey = (t, r, k) => t + ':' + Object.values(ident(t, r)).join('|') + ':' + k; // same on every device (not the row number)
 const plugForm = (r, v) => v.table === 'incoming' ? isPlugSize(r.Size) : v.table === 'plugPlant';
 const ACTIONS = {
   plantInc: { label: 'Planting', show: r => !r['Planted on App'], run: (r, v) => plantRun(r, v, 'p') },
@@ -364,7 +380,7 @@ const ACTIONS = {
   reasonInc: { label: 'Add reason why not planted', show: () => true, run: (r, v) => reasonRun(r, v, 'Incoming audit reason', 'Reason why not planted', 'reasonIncoming') },
   reasonPlug: { label: 'Add reason why not planted', show: () => true, run: (r, v) => reasonRun(r, v, 'Plugs audit reason', 'Reason why not flagged', 'reasonPlug') },
   reasonFin: { label: 'Add reason why not planted', show: () => true, run: (r, v) => reasonRun(r, v, 'Finished audit reason', 'Reason why not flagged', 'reasonFin') },
-  addLabels: { label: 'Add labels', show: r => !r['Label added'], run: (r, v) => { setFields(v.table, r, { 'Label added': true }); openForm('addLabels', PREFILL.finAddLabels(r, S.L), { sentKey: sentKey(v.table, r, 'l') }); } },
+  addLabels: { label: 'Add labels', show: r => !r['Label added'], run: (r, v) => { setFields(v.table, r, { 'Label added': true }); openForm('addLabels', PREFILL.finAddLabels(r, S.L), { sentKey: sentKey(v.table, r, 'a') }); } },
   setPlanted: { label: 'Set Planted on App', show: r => !r['Planted on App'], run: (r, v) => setFields(v.table, r, { 'Planted on App': true }) },
   labelsBy: { label: 'Labels added by', show: () => true, run: (r, v) => reasonRun(r, v, 'Label added by', 'Label added by', 'labelBy') }
 };
@@ -373,7 +389,14 @@ function plantRun(r, v) {
   const pre = v.table === 'incoming' ? (plug ? PREFILL.incPlug(r, S.L) : PREFILL.incFin(r, S.L)) : v.table === 'plugPlant' ? PREFILL.plugPlug(r, S.L) : PREFILL.finFin(r, S.L);
   openForm(plug ? 'plugPlanting' : 'finPlanting', pre, { sentKey: sentKey(v.table, r, 'p'), after: () => setFields(v.table, r, { 'Planted on App': true }) });
 }
+// Label printing record already sent from this device? (so the same item is not sent 10 times)
+function labelSent(v, r) { const x = S.sent[sentKey(v.table, r, 'l')]; return !x ? null : (typeof x === 'number' ? { t: x, by: '' } : x); }
 function labelRun(r, v) {
+  const ls = labelSent(v, r);
+  if (ls && !r._relabel) {
+    const day = new Date(ls.t).toDateString() === new Date().toDateString() ? '' : new Date(ls.t).toLocaleDateString() + ' ';
+    return choose(t('Labels already sent'), tLabelAgain(day + hhmm(ls.t), ls.by), [{ label: t('Yes, print again'), run: () => { r._relabel = true; try { labelRun(r, v); } finally { delete r._relabel; } } }, { label: 'No, cancel', run: () => {} }]);
+  }
   const plug = plugForm(r, v);
   const pre = v.table === 'incoming' ? (plug ? PREFILL.incPlugLabels(r, S.L) : PREFILL.incFinLabels(r, S.L)) : v.table === 'plugPlant' ? PREFILL.plugPlugLabels(r, S.L) : PREFILL.finFinLabels(r, S.L);
   openForm(plug ? 'plugLabels' : 'finLabels', pre, { sentKey: sentKey(v.table, r, 'l') });

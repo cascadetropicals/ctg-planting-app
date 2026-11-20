@@ -240,3 +240,5 @@ button{cursor:pointer}
 .wkq{display:flex;gap:8px;margin:-4px 0 8px}.wkq button{flex:1;min-height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font-weight:600}
 .warnbox{margin-top:10px;padding:12px;border-radius:12px;background:var(--spruce-tint);border:1.5px solid var(--spruce)}.warnbox p{margin:0 0 10px;font-weight:700}
 .warnbox .row2{display:flex;gap:8px}.warnbox .row2 .btn{flex:1}
+
+.grp{position:sticky;top:0;z-index:1;padding:6px 14px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);background:var(--paper);border-bottom:1px solid var(--line)}
