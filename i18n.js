@@ -54,7 +54,7 @@ const ES = {
   'Plugs – Empieza': 'Plugs – Empieza', 'Finished – Empieza': 'Finished – Empieza',
   'Not yet – remind me in 10 min': 'Todavía no – recuérdamelo en 10 min', 'Not back yet – remind me in 10 min': 'Aún no vuelvo – recuérdamelo en 10 min',
   'Empieza – start work': 'Empieza – empezar a trabajar', 'Tap this every time you start again: morning, after break, lunch, pulling or other work. It is saved right away with your name.': 'Toca esto cada vez que empieces de nuevo: mañana, después del descanso, almuerzo, sacar pedidos u otro trabajo. Se guarda al instante con tu nombre.',
-  'Yes, submit again': 'Sí, enviar otra vez', 'Labels sent': 'Etiquetas enviadas', 'This week': 'Esta semana', 'Earlier': 'Anteriores', 'Labels already sent': 'Etiquetas ya enviadas', 'Yes, print again': 'Sí, imprimir otra vez', 'No, cancel': 'No, cancelar',
+  'Yes, submit again': 'Sí, enviar otra vez', 'Labels sent': 'Etiquetas enviadas', 'wk': 'sem', 'This week': 'Esta semana', 'Earlier': 'Anteriores', 'Labels already sent': 'Etiquetas ya enviadas', 'Yes, print again': 'Sí, imprimir otra vez', 'No, cancel': 'No, cancelar',
   // menu / login
   'Refresh now': 'Actualizar ahora', 'Switch user': 'Cambiar de usuario', 'Language': 'Idioma', 'not set': 'sin definir',
   'Which Google account is this tablet signed in to?': '¿Con qué cuenta de Google está esta tableta?', 'Pick it once. It is saved with every record as the Email Address (like AppSheet did).': 'Elígela una vez. Se guarda con cada registro como Email Address (como hacía AppSheet).',

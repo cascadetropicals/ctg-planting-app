@@ -309,7 +309,13 @@ function showSlip() {
   // Choosing a vendor that only has last week's unplanted rows switches the week to last week (still editable)
   sel.addEventListener('change', () => { if (sel.value) wk.value = String(isLast(sel.value) && !C.confirmed.has(String(sel.value).trim().toLowerCase()) ? usWeek(lastWeekISO()) : usWeek(todayISO())); });
   const other = h('input', { type: 'text', id: 'slipOther', maxlength: '60', placeholder: t('Vendor name'), autocomplete: 'off', hidden: true });
-  const wkBtns = h('div', { class: 'wkq' }, h('button', { type: 'button', onclick: () => { wk.value = String(usWeek(todayISO())); } }, t('This week')), h('button', { type: 'button', onclick: () => { wk.value = String(usWeek(lastWeekISO())); } }, t('Last week')));
+  // quick week buttons: the one that matches the number in the box is filled green with a check, and each shows its week number
+  const wkThis = usWeek(todayISO()), wkLast = usWeek(lastWeekISO());
+  const bThis = h('button', { type: 'button' }), bLast = h('button', { type: 'button' });
+  const wkMark = () => { const cur = Number(wk.value); [[bThis, 'This week', wkThis], [bLast, 'Last week', wkLast]].forEach(([b, name, n]) => { const on = cur === n; b.className = on ? 'on' : ''; b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.textContent = (on ? '\u2713 ' : '') + t(name) + ' \u00b7 ' + t('wk') + ' ' + n; }); };
+  bThis.onclick = () => { wk.value = String(wkThis); wkMark(); }; bLast.onclick = () => { wk.value = String(wkLast); wkMark(); };
+  wk.addEventListener('input', wkMark); wkMark();
+  const wkBtns = h('div', { class: 'wkq' }, bThis, bLast);
   sel.addEventListener('change', () => { other.hidden = sel.value !== '__other'; if (!other.hidden) other.focus(); });
   const vendorVal = () => (sel.value === '__other' ? other.value.trim() : sel.value);
   const cam = h('input', { type: 'file', accept: 'image/*', capture: 'environment', hidden: true });
