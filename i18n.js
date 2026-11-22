@@ -43,6 +43,15 @@ const ES = {
   'Packing slip photo': 'Foto de la hoja de empaque', 'since': 'desde', 'Choose vendor…': 'Elegir proveedor…', 'Save packing slip': 'Guardar hoja de empaque', 'Take photo': 'Tomar foto', 'Add another page': 'Agregar otra página', 'Page': 'Página',
   'Could not read the photo. Try again.': 'No se pudo leer la foto. Intenta otra vez.', 'Choose the vendor first.': 'Elige primero el proveedor.', 'Week must be 1 to 53.': 'La semana debe ser de 1 a 53.', 'Sending': 'Enviando', '✓ Packing slip saved': '✓ Hoja de empaque guardada', 'Pages already sent': 'Páginas ya enviadas',
   'Take a picture of every page of the packing slip when you open the boxes.': 'Toma una foto de cada página de la hoja de empaque al abrir las cajas.', 'Vendor': 'Proveedor', 'Arrival week': 'Semana de llegada',
+  // audit
+  'Audit double submissions': 'Revisar registros dobles', 'Planting records': 'Registros de siembra', 'Plug planting records': 'Registros de siembra de plugs',
+  'Exact copies': 'Copias exactas', 'Possible doubles (look only)': 'Posibles dobles (solo mirar)', 'Checking…': 'Revisando…',
+  'Same second, plant, quantity and email. The first copy is always kept.': 'Mismo segundo, planta, cantidad y correo. La primera copia siempre se queda.',
+  'Same plant and quantity within 30 minutes. These can be real, so they cannot be deleted here.': 'Misma planta y cantidad en 30 minutos. Pueden ser reales, por eso no se pueden borrar aquí.',
+  'Keep': 'Se queda', 'Extra copy': 'Copia extra', 'Delete extra copy': 'Borrar copia extra', 'Yes, delete this copy': 'Sí, borrar esta copia', 'Cancel': 'Cancelar',
+  'No exact copies found.': 'No hay copias exactas.', 'No possible doubles found.': 'No hay posibles dobles.', 'Row': 'Fila', 'Rescan': 'Revisar de nuevo',
+  'Deleted. A copy was saved in the Audit_Deleted tab.': 'Borrado. Se guardó una copia en la pestaña Audit_Deleted.', 'Needs internet': 'Necesita internet',
+  'The audit needs a connection.': 'La revisión necesita conexión.', 'minutes apart': 'minutos de diferencia', 'Scanned: last 1,500 rows of each tab': 'Revisado: últimas 1,500 filas de cada pestaña',
   // current users
   'Current users': 'Usuarios actuales', 'This account is already logged in': 'Esta cuenta ya está conectada', 'already logged in on another device today': 'ya conectada en otro dispositivo hoy', 'Continue anyway?': '¿Continuar de todos modos?', 'Yes, continue': 'Sí, continuar', 'No, sign out': 'No, cerrar sesión',
   'No one logged in yet today.': 'Nadie ha iniciado sesión hoy.', 'you': 'tú', 'Logged in': 'Conectado', 'last seen': 'visto', 'Same account logged in on more than one device': 'La misma cuenta está conectada en más de un dispositivo',

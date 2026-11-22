@@ -163,13 +163,22 @@ function groupOf(v, r) {
 }
 const groupRank = (v, r) => groupOf(v, r);
 const GROUP_NAME = ['This week', 'Last week', 'Earlier'];
+// "Earlier · wk 40–45": week range of the older rows in this view
+function earlierLabel(v) {
+  const ws = [];
+  U.rows.forEach(r => { if (groupOf(v, r) !== 2) return; const w = v.id === 'planIncoming' ? Number(r['Incoming Week']) : (r['Plant Date'] ? usWeek(r['Plant Date']) : NaN); if (w > 0) ws.push(w); });
+  if (!ws.length) return t('Earlier');
+  let a = Math.min(...ws), b = Math.max(...ws);
+  if (b - a > 26) { a = Math.min(...ws.filter(w => w > 26)); b = Math.max(...ws.filter(w => w <= 26)); } // spans New Year: 50–3
+  return t('Earlier') + ' · ' + t('wk') + ' ' + (a === b ? a : a + '–' + b);
+}
 function appendRows(v) {
   const list = $('#list'); list.querySelector('.sentinel')?.remove();
   const start = list.querySelectorAll('.row').length, end = Math.min(U.rows.length, U.limit);
   const frag = document.createDocumentFragment();
   let lastG = start > 0 ? groupOf(v, U.rows[start - 1]) : -1;
   for (let i = start; i < end; i++) {
-    if (v.kind !== 'vendors' && GROUPED.has(v.id)) { const g = groupOf(v, U.rows[i]); if (g !== lastG) { lastG = g; frag.append(h('div', { class: 'grp', role: 'presentation', text: t(GROUP_NAME[g]) })); } }
+    if (v.kind !== 'vendors' && GROUPED.has(v.id)) { const g = groupOf(v, U.rows[i]); if (g !== lastG) { lastG = g; frag.append(h('div', { class: 'grp', role: 'presentation', text: g === 2 ? earlierLabel(v) : t(GROUP_NAME[g]) })); } }
     frag.append(v.kind === 'vendors' ? vendorRow(U.rows[i]) : rowEl(v, U.rows[i]));
   }
   list.append(frag);
@@ -588,6 +597,49 @@ function renderDup() {
   const ub = $('#userBtn'); if (ub) { ub.classList.toggle('alert', !!d); ub.setAttribute('aria-label', t('User menu') + (d ? ' – ' + t('Same account logged in on more than one device') : '')); } // red dot on the account circle
   if (d) { const o = (S.pres.users || []).filter(u => !u.me && u.acct === d.acct); b.append(t('⚠ This account is logged in on more than one device'), h('small', { text: o.map(u => u.name + ' · ' + hmPT(u.since)).join(', ') + ' – ' + t('tap to see') })); b.onclick = showUsers; }
 }
+
+// ---------------- audit: double submissions ----------------
+// Exact copies (same second + plant + qty + email) can be deleted (the first copy stays; the full row is archived in Audit_Deleted first).
+// Near doubles are shown for looking only. Online only; the server re-checks every row before it deletes.
+export async function showAudit() {
+  const ov = $('#overlay'), close = () => { ov.hidden = true; ov.textContent = ''; document.body.style.overflow = ''; };
+  const body = h('div', { class: 'body audit' });
+  const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' },
+    h('header', {}, h('h2', { text: t('Audit double submissions') }), h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', onclick: close }, '✕')), body);
+  ov.textContent = ''; ov.append(sheet); ov.hidden = false; document.body.style.overflow = 'hidden'; ov.onclick = e => { if (e.target === ov) close(); };
+  const kindName = k => k === 'plug' ? t('Plug planting records') : t('Planting records');
+  const line = (o, cls, tag) => h('div', { class: 'arow ' + (cls || '') },
+    h('span', { class: 'atag', text: tag }), h('b', { text: o.plant + ' × ' + o.qty }), h('span', { text: o.ts + ' · ' + (o.email || '—') + ' · ' + t('Row') + ' ' + o.row }));
+  async function scan() {
+    body.textContent = ''; body.append(h('p', { class: 'hint', text: t('Checking…') }));
+    let r; try { r = await api.call('auditScan', {}, S.user.token); } catch (e) { r = { error: 'net' }; }
+    body.textContent = '';
+    if (!r || r.error) { body.append(h('p', { class: 'hint', text: r && r.error && r.error !== 'net' ? r.error : t('The audit needs a connection.') }), h('div', { class: 'ahead' }, h('button', { class: 'btn', type: 'button', onclick: scan }, t('Rescan')))); return; }
+    body.append(h('div', { class: 'ahead' }, h('small', { text: t('Scanned: last 1,500 rows of each tab') }), h('button', { class: 'btn', type: 'button', onclick: scan }, '↻ ' + t('Rescan'))));
+    body.append(h('h3', { text: t('Exact copies') + ' (' + fmtNum(r.exact.length) + ')' }), h('p', { class: 'hint', text: t('Same second, plant, quantity and email. The first copy is always kept.') }));
+    if (!r.exact.length) body.append(h('p', { class: 'hint', text: t('No exact copies found.') }));
+    r.exact.forEach(g => {
+      const box = h('div', { class: 'agrp' }, h('div', { class: 'ak', text: kindName(g.kind) }), line({ plant: g.plant, qty: g.qty, ts: g.ts, email: g.email, row: g.keep }, 'keep', t('Keep')));
+      g.copies.forEach(c => {
+        const row = line(c, 'extra', t('Extra copy')), act = h('div', { class: 'aact' });
+        const idle = () => { act.textContent = ''; act.append(h('button', { class: 'btn danger', type: 'button', onclick: ask }, '🗑 ' + t('Delete extra copy'))); };
+        const ask = () => { act.textContent = ''; act.append(h('button', { class: 'btn danger', type: 'button', onclick: go }, t('Yes, delete this copy')), h('button', { class: 'btn', type: 'button', onclick: idle }, t('Cancel'))); };
+        const go = async () => {
+          act.textContent = ''; act.append(h('span', { class: 'hint', text: t('Checking…') }));
+          let x; try { x = await api.call('auditDelete', { kind: g.kind, row: c.row, ts: c.ts, plant: c.plant, qty: c.qty, email: c.email }, S.user.token); } catch (e) { x = { error: t('The audit needs a connection.') }; }
+          if (x && x.ok) { toast(t('Deleted. A copy was saved in the Audit_Deleted tab.')); scan(); }
+          else { act.textContent = ''; act.append(h('span', { class: 'dtag', text: (x && x.error) || 'Error' }), h('button', { class: 'btn', type: 'button', onclick: scan }, t('Rescan'))); }
+        };
+        idle(); row.append(act); box.append(row);
+      });
+      body.append(box);
+    });
+    body.append(h('h3', { text: t('Possible doubles (look only)') + ' (' + fmtNum(r.near.length) + ')' }), h('p', { class: 'hint', text: t('Same plant and quantity within 30 minutes. These can be real, so they cannot be deleted here.') }));
+    if (!r.near.length) body.append(h('p', { class: 'hint', text: t('No possible doubles found.') }));
+    r.near.forEach(n => body.append(h('div', { class: 'agrp' }, h('div', { class: 'ak', text: kindName(n.kind) + ' · ' + n.mins + ' ' + t('minutes apart') }), line(n.a, '', '1'), line(n.b, '', '2'))));
+  }
+  scan();
+}
 export function openMenu() {
   const m = $('#menu'); m.textContent = '';
   m.append(h('div', { class: 'info', text: tSignedIn(S.user ? S.user.name : '') }));
@@ -596,6 +648,7 @@ export function openMenu() {
   if (S.lastErr) m.append(h('div', { class: 'errl', text: S.lastErr }));
   m.append(h('button', { type: 'button', onclick: () => { m.hidden = true; applyLang(getLang() === 'es' ? 'en' : 'es'); } }, t('Language') + ': ' + (getLang() === 'es' ? 'Español → English' : 'English → Español')),
     h('button', { type: 'button', onclick: () => { m.hidden = true; showUsers(); } }, t('Current users')),
+    h('button', { type: 'button', onclick: () => { m.hidden = true; showAudit(); } }, t('Audit double submissions')),
     h('button', { type: 'button', onclick: () => { m.hidden = true; refreshNow(); } }, 'Refresh now'),
     h('button', { type: 'button', onclick: () => { m.hidden = true; logout(); } }, 'Switch user'));
   m.hidden = false;
