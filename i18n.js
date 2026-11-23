@@ -9,7 +9,7 @@ const ES = {
   // chrome
   'Saved': 'Guardado', 'Saving…': 'Guardando…', 'Offline – will send later': 'Sin conexión – se enviará después', 'Problem – tap to retry': 'Problema – toca para reintentar',
   'Search': 'Buscar', 'Refresh': 'Actualizar', 'Clear': 'Borrar', 'Back': 'Atrás', 'Close': 'Cerrar', 'User menu': 'Menú de usuario', 'Views': 'Vistas',
-  'Loading…': 'Cargando…', 'Nothing here': 'No hay nada aquí', 'No items match this view right now.': 'Ahora no hay elementos en esta vista.',
+  'Loading…': 'Cargando…', 'Loading data…': 'Cargando datos…', 'Sending…': 'Enviando…', 'Nothing here': 'No hay nada aquí', 'No items match this view right now.': 'Ahora no hay elementos en esta vista.',
   'Select an item': 'Selecciona un elemento', 'Details and actions appear here.': 'Aquí aparecen los detalles y las acciones.',
   'Select incoming vendor': 'Selecciona el proveedor', 'Tap one or more vendors above.': 'Toca uno o más proveedores arriba.',
   'Details': 'Detalles', 'More actions': 'Más acciones', 'More fields': 'Más campos', 'Watch video': 'Ver video',

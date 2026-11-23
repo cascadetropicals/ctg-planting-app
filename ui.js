@@ -147,7 +147,7 @@ function renderList() {
   renderVbar();
   $('#searchbar').hidden = v.kind === 'vendors';
   $('#viewhead').append(h('span', { text: viewTitle(v) }), h('span', { text: fmtNum(U.rows.length) + ' ' + tItems(U.rows.length) }));
-  if (!S.loaded) { list.append(h('div', { class: 'empty' }, h('b', { text: 'Loading…' }))); return; }
+  if (!S.loaded) { list.append(waitBox(t('Loading data…'))); return; }
   if (v.kind === 'urc' && !S.prefs.urc.length) { list.append(h('div', { class: 'empty' }, h('b', { text: 'Select incoming vendor' }), h('p', { text: 'Tap one or more vendors above.' }))); return; }
   if (!U.rows.length) { list.append(h('div', { class: 'empty' }, h('b', { text: 'Nothing here' }), h('p', { text: 'No items match this view right now.' }))); return; }
   appendRows(v);
@@ -325,8 +325,9 @@ function showQuality(r, v) {
     const f = cam.files && cam.files[0]; cam.value = ''; if (!f) return; msg.textContent = '';
     try { pics.push(await shrink(f)); draw(); } catch (e) { msg.textContent = t('Could not read the photo. Try again.'); }
   });
+  const wait = waitBox(t('Sending…'), true); wait.hidden = true;
   save.addEventListener('click', async () => {
-    busy = true; save.disabled = true; snap.disabled = true; msg.textContent = '';
+    busy = true; save.disabled = true; snap.disabled = true; msg.textContent = ''; wait.hidden = false;
     try {
       while (pics.length) {
         save.textContent = t('Sending') + ' ' + (sent + 1) + '…';
@@ -336,14 +337,14 @@ function showQuality(r, v) {
       }
       close(); toast(t('✓ Quality photos saved') + ' (' + sent + ')');
     } catch (e) {
-      busy = false; snap.disabled = false; save.textContent = t('Save photos');
+      busy = false; snap.disabled = false; wait.hidden = true; save.textContent = t('Save photos');
       msg.textContent = (e.net ? t('No connection. Try again.') : e.message) + (sent ? ' ' + t('Photos already sent') + ': ' + sent : ''); draw();
     }
   });
   const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' },
     h('header', {}, h('h2', { text: t('Quality issue photo') }), h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', onclick: close }, '✕')),
     h('div', { class: 'body', style: 'padding:12px 14px' }, h('p', { class: 'hint' }, h('b', { text: plant }), vendor ? ' · ' + vendor : ''),
-      h('label', { class: 'fld' }, h('span', { text: t('Vendor order #') }), order), h('label', { class: 'fld' }, h('span', { text: t('Note') }), note), thumbs, cam, snap, msg), h('footer', {}, save));
+      h('label', { class: 'fld' }, h('span', { text: t('Vendor order #') }), order), h('label', { class: 'fld' }, h('span', { text: t('Note') }), note), thumbs, cam, snap, wait, msg), h('footer', {}, save));
   ov.textContent = ''; ov.append(sheet); ov.hidden = false; document.body.style.overflow = 'hidden'; ov.onclick = e => { if (e.target === ov && !busy) close(); };
 }
 function showSlip() {
@@ -386,8 +387,9 @@ function showSlip() {
     const f = cam.files && cam.files[0]; cam.value = ''; if (!f) return; msg.textContent = '';
     try { pages.push(await shrink(f)); draw(); } catch (e) { msg.textContent = t('Could not read the photo. Try again.'); }
   });
+  const wait = waitBox(t('Sending…'), true); wait.hidden = true;
   const upload = async (vendor, w) => {
-    busy = true; save.disabled = true; snap.disabled = true;
+    busy = true; save.disabled = true; snap.disabled = true; wait.hidden = false;
     try {
       while (pages.length) {
         save.textContent = t('Sending') + ' ' + (sent + 1) + '…';
@@ -397,7 +399,7 @@ function showSlip() {
       }
       close(); toast(t('✓ Packing slip saved') + ' – ' + id + ' (' + sent + ')');
     } catch (e) {
-      busy = false; snap.disabled = false; save.textContent = t('Save packing slip');
+      busy = false; snap.disabled = false; wait.hidden = true; save.textContent = t('Save packing slip');
       msg.textContent = (e.net ? t('No connection. Try again.') : e.message) + (sent ? ' ' + t('Pages already sent') + ': ' + sent + ' (' + id + ')' : '');
       draw();
     }
@@ -420,7 +422,7 @@ function showSlip() {
     h('div', { class: 'body', style: 'padding:12px 14px' },
       h('p', { class: 'hint', text: t('Take a picture of every page of the packing slip when you open the boxes.') }),
       h('label', { class: 'fld' }, h('span', { text: t('Vendor') }), sel, other), h('label', { class: 'fld' }, h('span', { text: t('Arrival week') }), wk), wkBtns,
-      thumbs, cam, snap, msg, confirmBox), h('footer', {}, save));
+      thumbs, cam, snap, wait, msg, confirmBox), h('footer', {}, save));
   ov.textContent = ''; ov.append(sheet); ov.hidden = false; document.body.style.overflow = 'hidden'; draw();
 }
 
@@ -644,6 +646,9 @@ function renderDup() {
   if (d) { const o = (S.pres.users || []).filter(u => !u.me && u.acct === d.acct); b.append(t('⚠ This account is logged in on more than one device'), h('small', { text: o.map(u => u.name + ' · ' + hmPT(u.since)).join(', ') + ' – ' + t('tap to see') })); b.onclick = showUsers; }
 }
 
+// loading plant: small animated plant + text (CSS .plantload); sm = no box, for inside sheets
+export const waitBox = (text, sm) => h('div', { class: 'plantload' + (sm ? ' sm' : ''), role: 'status' }, h('span', { text }));
+
 // ---------------- audit: double submissions ----------------
 // Exact copies (same second + plant + qty + email) can be deleted (the first copy stays; the full row is archived in Audit_Deleted first).
 // Near doubles are shown for looking only. Online only; the server re-checks every row before it deletes.
@@ -657,7 +662,7 @@ export async function showAudit() {
   const line = (o, cls, tag) => h('div', { class: 'arow ' + (cls || '') },
     h('span', { class: 'atag', text: tag }), h('b', { text: o.plant + ' × ' + o.qty }), h('span', { text: o.ts + ' · ' + (o.email || '—') + ' · ' + t('Row') + ' ' + o.row }));
   async function scan() {
-    body.textContent = ''; body.append(h('p', { class: 'hint', text: t('Checking…') }));
+    body.textContent = ''; body.append(waitBox(t('Checking…')));
     let r; try { r = await api.call('auditScan', {}, S.user.token); } catch (e) { r = { error: 'net' }; }
     body.textContent = '';
     if (!r || r.error) { body.append(h('p', { class: 'hint', text: r && r.error && r.error !== 'net' ? r.error : t('The audit needs a connection.') }), h('div', { class: 'ahead' }, h('button', { class: 'btn', type: 'button', onclick: scan }, t('Rescan')))); return; }
@@ -671,7 +676,7 @@ export async function showAudit() {
         const idle = () => { act.textContent = ''; act.append(h('button', { class: 'btn danger', type: 'button', onclick: ask }, '🗑 ' + t('Delete extra copy'))); };
         const ask = () => { act.textContent = ''; act.append(h('button', { class: 'btn danger', type: 'button', onclick: go }, t('Yes, delete this copy')), h('button', { class: 'btn', type: 'button', onclick: idle }, t('Cancel'))); };
         const go = async () => {
-          act.textContent = ''; act.append(h('span', { class: 'hint', text: t('Checking…') }));
+          act.textContent = ''; act.append(waitBox(t('Checking…'), true));
           let x; try { x = await api.call('auditDelete', { kind: g.kind, row: c.row, ts: c.ts, plant: c.plant, qty: c.qty, email: c.email }, S.user.token); } catch (e) { x = { error: t('The audit needs a connection.') }; }
           if (x && x.ok) { toast(t('Deleted. A copy was saved in the Audit_Deleted tab.')); scan(); }
           else { act.textContent = ''; act.append(h('span', { class: 'dtag', text: (x && x.error) || 'Error' }), h('button', { class: 'btn', type: 'button', onclick: scan }, t('Rescan'))); }
