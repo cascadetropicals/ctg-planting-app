@@ -73,6 +73,7 @@ export async function handle(action, body, token) {
   if (action === 'auditScan') { const A = { plant: 'Demo Plant', qty: '10', ts: '2026-11-20 09:15:02', email: 'demo@x.com' };
     return { exact: [{ kind: 'fin', ...A, keep: 100, copies: [{ row: 101, ...A }] }], near: [{ kind: 'plug', mins: 4.5, a: { row: 5, plant: 'P', qty: '3', ts: '2026-11-20 10:00:00', email: 'a@x.com' }, b: { row: 6, plant: 'P', qty: '3', ts: '2026-11-20 10:04:30', email: 'a@x.com' } }] }; }
   if (action === 'auditDelete') return { ok: true };
+  if (action === 'quality') return { name: 'demo_1.jpg' };
   if (action === 'ping') return { seq: d.seq };
   if (action === 'load') return { seq: d.seq, tables: d.tables, lookups: lookups() };
   if (action === 'save') {

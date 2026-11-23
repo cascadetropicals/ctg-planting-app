@@ -206,10 +206,11 @@ function renderDetail() {
     h('div', { class: 'ttl' }, ((r.Genus || '') + ' ' + (r.Variety || '')).trim(), h('small', { text: [r.Size, r.Vendor || r.Location].filter(Boolean).join(' · ') }))));
   const body = h('div', { class: 'dbody' });
     const MAIN = MAIN_ACTIONS;
-  const keys = (v.actions || []).filter(k => ACTIONS[k] && ACTIONS[k].show(r));
+  const keys = (v.actions || []).filter(k => ACTIONS[k] && ACTIONS[k].show(r) && k !== 'qualityPhoto');
   const main = keys.filter(k => MAIN.includes(k)), more = keys.filter(k => !MAIN.includes(k));
   if (main.length) body.append(h('div', { class: 'actions main' }, main.map(k => h('button', { class: 'btn primary big', type: 'button', onclick: () => ACTIONS[k].run(r, v) }, ACTIONS[k].label))));
   if (more.length) body.append(h('details', { class: 'more' }, h('summary', { text: 'More actions' }), h('div', { class: 'actions' }, more.map(k => h('button', { class: 'btn', type: 'button', onclick: () => ACTIONS[k].run(r, v) }, ACTIONS[k].label)))));
+  if ((v.actions || []).includes('qualityPhoto')) body.append(h('div', { class: 'actions' }, h('button', { class: 'btn big', type: 'button', onclick: () => showQuality(r, v) }, t('📷 Quality issue photo'))));
   if (v.video && r._video) body.append(h('div', { class: 'actions' }, h('a', { class: 'btn', href: r._video, target: '_blank', rel: 'noopener' }, 'Watch video')));
   const sect = h('div', { class: 'sect', style: 'margin:0 12px 16px' }, h('h3', { text: 'Details' }));
   for (const c of v.cols) { const val = show(c, r[c]); if (val !== '') sect.append(h('div', { class: 'kv' }, h('span', { text: c }), h('span', { text: val }))); }
@@ -300,6 +301,48 @@ async function shrink(file) {
   const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
   c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
   return c.toDataURL('image/jpeg', 0.82);
+}
+
+// ---------------- quality issue photos (rotten, damaged ...) ----------------
+// One or more pictures of one plant, sent one at a time to the backend, which files them in the "Quality Claims - vendors" Drive folder.
+function showQuality(r, v) {
+  const ov = $('#overlay'), close = () => { ov.hidden = true; ov.textContent = ''; document.body.style.overflow = ''; };
+  const plant = ((r.Genus || '') + ' ' + (r.Variety || '')).trim() + (r.Size ? ' - ' + r.Size : ''), vendor = String(r.Vendor || '').trim();
+  const pics = []; let busy = false, sent = 0;
+  const cam = h('input', { type: 'file', accept: 'image/*', capture: 'environment', hidden: true });
+  const thumbs = h('div', { class: 'thumbs' }), msg = h('p', { class: 'err', role: 'alert' });
+  const note = h('textarea', { rows: '2', maxlength: '300', placeholder: t('What is wrong? (optional)'), 'aria-label': t('Note') });
+  const save = h('button', { class: 'btn primary', type: 'button', disabled: true }, t('Save photos'));
+  const snap = h('button', { class: 'btn primary big', type: 'button', onclick: () => cam.click() }, '📷 ' + t('Take photo'));
+  const draw = () => {
+    thumbs.textContent = '';
+    pics.forEach((p, i) => thumbs.append(h('div', { class: 'thumb' }, h('img', { src: p, alt: t('Photo') + ' ' + (i + 1) }), h('span', { text: t('Photo') + ' ' + (i + 1) }),
+      h('button', { class: 'icon-btn sm', type: 'button', 'aria-label': 'Remove', onclick: () => { if (!busy) { pics.splice(i, 1); draw(); } } }, '✕'))));
+    snap.textContent = '📷 ' + t(pics.length ? 'Add another photo' : 'Take photo'); save.disabled = busy || !pics.length;
+  };
+  cam.addEventListener('change', async () => {
+    const f = cam.files && cam.files[0]; cam.value = ''; if (!f) return; msg.textContent = '';
+    try { pics.push(await shrink(f)); draw(); } catch (e) { msg.textContent = t('Could not read the photo. Try again.'); }
+  });
+  save.addEventListener('click', async () => {
+    busy = true; save.disabled = true; snap.disabled = true; msg.textContent = '';
+    try {
+      while (pics.length) {
+        save.textContent = t('Sending') + ' ' + (sent + 1) + '…';
+        const x = await api.call('quality', { plant, vendor, forecast: r['Forecast #'] || r.ID || '', week: r['Incoming Week'] || '', note: note.value, data: pics[0] }, S.user.token);
+        if (!x || x.error) throw new Error((x && x.error) || 'error');
+        sent++; pics.shift();
+      }
+      close(); toast(t('✓ Quality photos saved') + ' (' + sent + ')');
+    } catch (e) {
+      busy = false; snap.disabled = false; save.textContent = t('Save photos');
+      msg.textContent = (e.net ? t('No connection. Try again.') : e.message) + (sent ? ' ' + t('Photos already sent') + ': ' + sent : ''); draw();
+    }
+  });
+  const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' },
+    h('header', {}, h('h2', { text: t('Quality issue photo') }), h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', onclick: close }, '✕')),
+    h('div', { class: 'body' }, h('p', { class: 'hint' }, h('b', { text: plant }), vendor ? ' · ' + vendor : ''), cam, thumbs, snap, h('label', { class: 'fld' }, h('span', { text: t('Note') }), note), msg, save));
+  ov.textContent = ''; ov.append(sheet); ov.hidden = false; document.body.style.overflow = 'hidden'; ov.onclick = e => { if (e.target === ov && !busy) close(); };
 }
 function showSlip() {
   const ov = $('#overlay'), close = () => { ov.hidden = true; ov.textContent = ''; document.body.style.overflow = ''; };
@@ -396,6 +439,7 @@ const ACTIONS = {
   reasonPlug: { label: 'Add reason why not planted', show: () => true, run: (r, v) => reasonRun(r, v, 'Plugs audit reason', 'Reason why not flagged', 'reasonPlug') },
   reasonFin: { label: 'Add reason why not planted', show: () => true, run: (r, v) => reasonRun(r, v, 'Finished audit reason', 'Reason why not flagged', 'reasonFin') },
   addLabels: { label: 'Add labels', show: r => !r['Label added'], run: (r, v) => { setFields(v.table, r, { 'Label added': true }); openForm('addLabels', PREFILL.finAddLabels(r, S.L), { sentKey: sentKey(v.table, r, 'a') }); } },
+  qualityPhoto: { label: '📷 Quality issue photo', show: () => true, run: (r, v) => showQuality(r, v) },
   setPlanted: { label: 'Set Planted on App', show: r => !r['Planted on App'], run: (r, v) => setFields(v.table, r, { 'Planted on App': true }) },
   labelsBy: { label: 'Labels added by', show: () => true, run: (r, v) => reasonRun(r, v, 'Label added by', 'Label added by', 'labelBy') }
 };
