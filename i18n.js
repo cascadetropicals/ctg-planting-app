@@ -45,7 +45,7 @@ const ES = {
   'Take a picture of every page of the packing slip when you open the boxes.': 'Toma una foto de cada página de la hoja de empaque al abrir las cajas.', 'Vendor': 'Proveedor', 'Arrival week': 'Semana de llegada',
   // quality photos
   'Quality issue photo': 'Foto de problema de calidad', '📷 Quality issue photo': '📷 Foto de problema de calidad', 'Save photos': 'Guardar fotos', 'Photo': 'Foto', 'Add another photo': 'Agregar otra foto',
-  'What is wrong? (optional)': '¿Qué pasa? (opcional)', 'Note': 'Nota', '✓ Quality photos saved': '✓ Fotos de calidad guardadas', 'Photos already sent': 'Fotos ya enviadas',
+  'What is wrong? (optional)': '¿Qué pasa? (opcional)', 'Note': 'Nota', 'Vendor order #': 'Pedido del proveedor #', 'Order number (optional)': 'Número de pedido (opcional)', '✓ Quality photos saved': '✓ Fotos de calidad guardadas', 'Photos already sent': 'Fotos ya enviadas',
   // audit
   'Audit double submissions': 'Revisar registros dobles', 'Planting records': 'Registros de siembra', 'Plug planting records': 'Registros de siembra de plugs',
   'Exact copies': 'Copias exactas', 'Possible doubles (look only)': 'Posibles dobles (solo mirar)', 'Checking…': 'Revisando…',

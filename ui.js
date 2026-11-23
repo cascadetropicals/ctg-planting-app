@@ -311,6 +311,7 @@ function showQuality(r, v) {
   const pics = []; let busy = false, sent = 0;
   const cam = h('input', { type: 'file', accept: 'image/*', capture: 'environment', hidden: true });
   const thumbs = h('div', { class: 'thumbs' }), msg = h('p', { class: 'err', role: 'alert' });
+  const order = h('input', { type: 'text', maxlength: '30', placeholder: t('Order number (optional)'), autocomplete: 'off', 'aria-label': t('Vendor order #') });
   const note = h('textarea', { rows: '2', maxlength: '300', placeholder: t('What is wrong? (optional)'), 'aria-label': t('Note') });
   const save = h('button', { class: 'btn primary', type: 'button', disabled: true }, t('Save photos'));
   const snap = h('button', { class: 'btn primary big', type: 'button', onclick: () => cam.click() }, '📷 ' + t('Take photo'));
@@ -329,7 +330,7 @@ function showQuality(r, v) {
     try {
       while (pics.length) {
         save.textContent = t('Sending') + ' ' + (sent + 1) + '…';
-        const x = await api.call('quality', { plant, vendor, forecast: r['Forecast #'] || r.ID || '', week: r['Incoming Week'] || '', note: note.value, data: pics[0] }, S.user.token);
+        const x = await api.call('quality', { plant, vendor, order: order.value, forecast: r['Forecast #'] || r.ID || '', week: r['Incoming Week'] || '', note: note.value, data: pics[0] }, S.user.token);
         if (!x || x.error) throw new Error((x && x.error) || 'error');
         sent++; pics.shift();
       }
@@ -341,7 +342,8 @@ function showQuality(r, v) {
   });
   const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' },
     h('header', {}, h('h2', { text: t('Quality issue photo') }), h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', onclick: close }, '✕')),
-    h('div', { class: 'body' }, h('p', { class: 'hint' }, h('b', { text: plant }), vendor ? ' · ' + vendor : ''), cam, thumbs, snap, h('label', { class: 'fld' }, h('span', { text: t('Note') }), note), msg, save));
+    h('div', { class: 'body', style: 'padding:12px 14px' }, h('p', { class: 'hint' }, h('b', { text: plant }), vendor ? ' · ' + vendor : ''),
+      h('label', { class: 'fld' }, h('span', { text: t('Vendor order #') }), order), h('label', { class: 'fld' }, h('span', { text: t('Note') }), note), thumbs, cam, snap, msg), h('footer', {}, save));
   ov.textContent = ''; ov.append(sheet); ov.hidden = false; document.body.style.overflow = 'hidden'; ov.onclick = e => { if (e.target === ov && !busy) close(); };
 }
 function showSlip() {
