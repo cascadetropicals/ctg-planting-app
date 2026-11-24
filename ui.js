@@ -210,11 +210,12 @@ function renderDetail() {
   const main = keys.filter(k => MAIN.includes(k)), more = keys.filter(k => !MAIN.includes(k));
   if (main.length) body.append(h('div', { class: 'actions main' }, main.map(k => h('button', { class: 'btn primary big', type: 'button', onclick: () => ACTIONS[k].run(r, v) }, ACTIONS[k].label))));
   if (more.length) body.append(h('details', { class: 'more' }, h('summary', { text: 'More actions' }), h('div', { class: 'actions' }, more.map(k => h('button', { class: 'btn', type: 'button', onclick: () => ACTIONS[k].run(r, v) }, ACTIONS[k].label)))));
-  if ((v.actions || []).includes('qualityPhoto')) body.append(h('div', { class: 'actions' }, h('button', { class: 'btn big', type: 'button', onclick: () => showQuality(r, v) }, t('📷 Quality issue photo'))));
   if (v.video && r._video) body.append(h('div', { class: 'actions' }, h('a', { class: 'btn', href: r._video, target: '_blank', rel: 'noopener' }, 'Watch video')));
   const sect = h('div', { class: 'sect', style: 'margin:0 12px 16px' }, h('h3', { text: 'Details' }));
   for (const c of v.cols) { const val = show(c, r[c]); if (val !== '') sect.append(h('div', { class: 'kv' }, h('span', { text: c }), h('span', { text: val }))); }
-  body.append(sect); d.append(body);
+  body.append(sect);
+  if ((v.actions || []).includes('qualityPhoto')) body.append(h('div', { class: 'actions' }, h('button', { class: 'btn big', type: 'button', onclick: () => showQuality(r, v) }, t('📷 Quality issue photo'))));
+  d.append(body);
 }
 
 // ---------------- view-level buttons (Empieza, Additions) ----------------
