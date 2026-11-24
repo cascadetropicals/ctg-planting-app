@@ -15,7 +15,7 @@ async function enter(fresh) {
   refreshUI(); start();
   const p = await presence(fresh ? 'login' : 'ping'); // who else is logged in with this account today?
   const mine = (p.users || []).find(u => u.me);
-  if (fresh && mine && mine.dup) askDuplicate((p.users || []).filter(u => !u.me && u.acct === mine.acct), mine, logout);
+  if (fresh && mine && mine.dup) askDuplicate((p.users || []).filter(u => !u.me && (mine.with || []).includes(u.dev)), mine, logout);
 }
 function showLogin(msg) {
   $('#app').hidden = true; $('#login').hidden = false; $('#loginErr').textContent = msg || '';
