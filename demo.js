@@ -74,6 +74,10 @@ export async function handle(action, body, token) {
     return { exact: [{ kind: 'fin', ...A, keep: 100, copies: [{ row: 101, ...A }] }], near: [{ kind: 'plug', mins: 4.5, a: { row: 5, plant: 'P', qty: '3', ts: '2026-11-20 10:00:00', email: 'a@x.com' }, b: { row: 6, plant: 'P', qty: '3', ts: '2026-11-20 10:04:30', email: 'a@x.com' } }] }; }
   if (action === 'auditDelete') return { ok: true };
   if (action === 'quality') return { name: 'demo_1.jpg' };
+  if (action === 'feedbackCfg') { const es = body.lang !== 'en'; return { round: '2026-11', scale: es ? ['Muy en desacuerdo', 'En desacuerdo', 'Neutral', 'De acuerdo', 'Muy de acuerdo'] : ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree'], q: [
+    { id: 'ease', type: 'scale', text: es ? 'La app es fácil de usar.' : 'The app is easy to use.' }, { id: 'speed', type: 'scale', text: es ? 'La app es lo bastante rápida.' : 'The app is fast enough.' },
+    { id: 'open', type: 'text', max: 500, text: es ? '¿Hay algo que te moleste o alguna sugerencia para mejorar la app? (opcional)' : 'Is there anything that annoys you, or any suggestion to improve the app? (optional)' }] }; }
+  if (action === 'feedback') return { ok: true };
   if (action === 'ping') return { seq: d.seq };
   if (action === 'load') return { seq: d.seq, tables: d.tables, lookups: lookups() };
   if (action === 'save') {

@@ -47,6 +47,8 @@ const ES = {
   'Quality issue photo': 'Foto de problema de calidad', '📷 Quality issue photo': '📷 Foto de problema de calidad', 'Save photos': 'Guardar fotos', 'Photo': 'Foto', 'Add another photo': 'Agregar otra foto',
   'What is wrong? (optional)': '¿Qué pasa? (opcional)', 'Note': 'Nota', 'Vendor order #': 'Pedido del proveedor #', 'Order number (optional)': 'Número de pedido (opcional)', '✓ Quality photos saved': '✓ Fotos de calidad guardadas', 'Photos already sent': 'Fotos ya enviadas',
   // audit
+  'Give feedback': 'Dar opinión', 'Quick question': 'Una pregunta rápida', 'Not now': 'Ahora no', 'Next': 'Siguiente', 'Skip': 'Omitir', 'Send': 'Enviar', 'Add a note': 'Agregar una nota', 'Question': 'Pregunta', 'of': 'de',
+  'Thank you. This helps us improve the app.': 'Gracias. Esto nos ayuda a mejorar la app.', 'Could not send. Try again.': 'No se pudo enviar. Inténtalo de nuevo.', 'Could not load. Try again.': 'No se pudo cargar. Inténtalo de nuevo.',
   'Audit double submissions': 'Revisar registros dobles', 'Planting records': 'Registros de siembra', 'Plug planting records': 'Registros de siembra de plugs',
   'Exact copies': 'Copias exactas', 'Possible doubles (look only)': 'Posibles dobles (solo mirar)', 'Checking…': 'Revisando…',
   'Same second, plant, quantity and email. The first copy is always kept.': 'Mismo segundo, planta, cantidad y correo. La primera copia siempre se queda.',

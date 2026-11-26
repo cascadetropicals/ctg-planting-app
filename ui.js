@@ -4,6 +4,7 @@ import { S, subscribe, context, setFields, flagRow, addRecord, ident, chipOn, to
 import { VIEWS, VBAR, viewById, CHIPS, isPlugSize, reasonKey, recentTs } from './views.js';
 import { FORMS, PREFILL, FORM_DEFAULTS, readyDate } from './forms.js';
 import { fmtDate, fmtDateTime, fmtNum, norm, esc, nowStamp, usWeek, todayISO, addDays } from './format.js';
+import { CONFIG } from './config.js';
 import { t, getLang, setLang, tItems, tSignedIn, tGoogle, tTablet, tTitle, tAgain, tSaved, tLabelAgain } from './i18n.js';
 
 const $ = s => document.querySelector(s);
@@ -700,6 +701,7 @@ export function openMenu() {
   if (S.lastErr) m.append(h('div', { class: 'errl', text: S.lastErr }));
   m.append(h('button', { type: 'button', onclick: () => { m.hidden = true; applyLang(getLang() === 'es' ? 'en' : 'es'); } }, t('Language') + ': ' + (getLang() === 'es' ? 'Español → English' : 'English → Español')),
     h('button', { type: 'button', onclick: () => { m.hidden = true; showUsers(); } }, t('Current users')),
+    h('button', { type: 'button', onclick: () => { m.hidden = true; showFeedback(false); } }, t('Give feedback')),
     h('button', { type: 'button', onclick: () => { m.hidden = true; showAudit(); } }, t('Audit double submissions')),
     h('button', { type: 'button', onclick: () => { m.hidden = true; refreshNow(); } }, 'Refresh now'),
     h('button', { type: 'button', onclick: () => { m.hidden = true; logout(); } }, 'Switch user'));
@@ -728,6 +730,7 @@ export function mount() {
     });
   });
   renderAll();
+  fbNoteDay(); setInterval(fbTick, FB.CHECK_MS);
   setTimeout(checkLunch, 1500); // right after signing in / opening the app
   setInterval(checkLunch, 30000); document.addEventListener('visibilitychange', () => { if (!document.hidden) checkLunch(); }); window.__lunchCheck = checkLunch;
 }
@@ -740,6 +743,99 @@ export function translateStatic() {
   document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === getLang())));
 }
 export function applyLang(l) {
-  setLang(l); translateStatic();
+  setLang(l); translateStatic(); if (window.__fbLang) window.__fbLang();
   if (S.user && !$('#app').hidden) { renderAll(); document.querySelector('#lunchAlert')?.remove(); if (window.__lunchCheck) window.__lunchCheck(); }
+}
+
+// ---------------- feedback popup (anonymous, short, about once a month) ----------------
+// All limits are constants here. The questions and their texts live in the backend (FEEDBACK block in PlantingApi.gs).
+// No name, token or device id is sent: the answer cannot be linked to a person. Cooldown lives only in this browser.
+const FB = {
+  AUTO: false,        // false = no automatic popup yet (only the "Give feedback" menu entry). Set true at go-live.
+  MIN_DAYS: 3,        // asked only after the app was used on this many different days
+  COOLDOWN_DAYS: 30,  // after an answer: no popup for this long
+  SNOOZE_DAYS: 7,     // after "Not now": ask again after this long
+  MAX_DISMISS: 2,     // after this many "Not now" in a month: skip until next month
+  DELAY_MS: 8000,     // never in the first seconds after opening the app
+  CHECK_MS: 5000      // how often the quiet-moment check runs
+};
+const FBK = { last: 'feedbackLastAnswered', snooze: 'feedbackSnoozeUntil', dismiss: 'feedbackDismissCount', month: 'feedbackDismissMonth', days: 'daysUsed' };
+const fbGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
+const fbSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: the once-per-session guard still applies */ } };
+const fbMonth = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+const fbStart = Date.now();
+let fbShown = false;
+export function fbNoteDay() { const d = todayISO(), a = fbGet(FBK.days, []); if (!a.includes(d)) { a.push(d); fbSet(FBK.days, a.slice(-10)); } }
+function fbDismissed() {
+  if (fbGet(FBK.month, '') !== fbMonth()) { fbSet(FBK.month, fbMonth()); fbSet(FBK.dismiss, 0); }
+  const n = fbGet(FBK.dismiss, 0) + 1; fbSet(FBK.dismiss, n);
+  const d = new Date(); fbSet(FBK.snooze, n >= FB.MAX_DISMISS ? new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime() : Date.now() + FB.SNOOZE_DAYS * 86400000);
+}
+function fbAnswered() { fbSet(FBK.last, Date.now()); fbSet(FBK.dismiss, 0); fbSet(FBK.snooze, 0); }
+function fbDue() {
+  const ov = $('#overlay');
+  return FB.AUTO && !fbShown && S.user && S.loaded && !S.lastErr && S.status !== 'saving' && !document.hidden && navigator.onLine !== false
+    && Date.now() - fbStart > FB.DELAY_MS && fbGet(FBK.days, []).length >= FB.MIN_DAYS
+    && Date.now() - fbGet(FBK.last, 0) > FB.COOLDOWN_DAYS * 86400000 && Date.now() > fbGet(FBK.snooze, 0)
+    && (fbGet(FBK.month, '') !== fbMonth() || fbGet(FBK.dismiss, 0) < FB.MAX_DISMISS)
+    && ov && ov.hidden && !document.querySelector('#lunchAlert') && !U.sel;
+}
+window.__fbTest = { FB, fbDue: () => fbDue(), tick: () => fbTick() }; // test hook (no effect for users)
+export function fbTick() { if (fbDue()) showFeedback(true); }
+export async function showFeedback(auto) {
+  const ov = $('#overlay'); if (!ov || !ov.hidden) return;
+  if (auto) fbShown = true;
+  let cfg; try { cfg = await api.call('feedbackCfg', { lang: getLang() }); if (!cfg || !cfg.q) throw new Error('cfg'); } catch (e) { if (!auto) toast(t('Could not load. Try again.')); return; }
+  const prev = document.activeElement; let step = 0, busy = false, done = false, err = '', lang = getLang();
+  const ans = {}; cfg.q.forEach(q => { ans[q.id] = q.type === 'text' ? '' : { s: null, n: '' }; });
+  const has = () => cfg.q.some(q => q.type === 'text' ? String(ans[q.id]).trim() : ans[q.id].s);
+  const close = (dismissed) => { document.removeEventListener('keydown', key, true); ov.hidden = true; ov.textContent = ''; document.body.style.overflow = ''; if (dismissed && auto && !done) fbDismissed(); if (prev && prev.focus) { try { prev.focus(); } catch (e) { /* ignore */ } } };
+  const key = e => {
+    if (e.key === 'Escape') { e.preventDefault(); close(true); return; }
+    if (e.key === 'Tab') { const f = [...ov.querySelectorAll('button,textarea,summary,input')].filter(x => !x.disabled && x.offsetParent !== null); if (!f.length) return; const i = f.indexOf(document.activeElement); if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); } }
+  };
+  const send = async skipText => {
+    if (busy) return; if (skipText) { const q3 = cfg.q.find(q => q.type === 'text'); if (q3) ans[q3.id] = ''; }
+    if (!has()) { close(true); return; }
+    busy = true; err = ''; draw();
+    try {
+      const r = await api.call('feedback', { lang, ver: CONFIG.VERSION, a: ans }, '');
+      if (!r || !r.ok) throw new Error((r && r.error) || 'fail');
+      done = true; busy = false; fbAnswered(); draw(); setTimeout(() => { if (ov.querySelector('.fbthanks')) close(false); }, 3000);
+    } catch (e) { busy = false; err = t('Could not send. Try again.'); draw(); }
+  };
+  const draw = () => {
+    ov.textContent = '';
+    const q = cfg.q[step], last = step === cfg.q.length - 1, body = h('div', { class: 'body' });
+    if (done) body.append(h('p', { class: 'fbq fbthanks', role: 'status', text: t('Thank you. This helps us improve the app.') }));
+    else if (busy) body.append(waitBox(t('Sending…'), true));
+    else {
+      body.append(h('p', { class: 'fbq', id: 'fbq', text: q.text }));
+      if (q.type === 'scale') {
+        const a = ans[q.id];
+        body.append(h('div', { class: 'fbs', role: 'group', 'aria-labelledby': 'fbq' }, cfg.scale.map((lab, i) => h('button', { type: 'button', class: a.s === i + 1 ? 'on' : '', 'aria-pressed': String(a.s === i + 1), 'aria-label': (i + 1) + ' – ' + lab, text: String(i + 1), onclick: () => { a.s = a.s === i + 1 ? null : i + 1; draw(); } }))),
+          h('div', { class: 'fbl' }, h('span', { text: cfg.scale[0] }), h('span', { text: cfg.scale[cfg.scale.length - 1] })),
+          h('div', { class: 'fbsel', 'aria-live': 'polite', text: a.s ? cfg.scale[a.s - 1] : '' }));
+        const ta = h('textarea', { rows: '2', maxlength: String(cfg.q[cfg.q.length - 1].max || 500), 'aria-label': t('Add a note'), oninput: e => { a.n = e.target.value; } }); ta.value = a.n;
+        body.append(h('details', Object.assign({ class: 'grp' }, a.n ? { open: '' } : {}), h('summary', { text: '+ ' + t('Add a note') }), h('div', { class: 'fld', style: 'display:block;padding:8px 14px' }, ta)));
+      } else {
+        const max = q.max || 500, ta = h('textarea', { rows: '5', maxlength: String(max), 'aria-labelledby': 'fbq', style: 'width:calc(100% - 28px);margin:0 14px;padding:10px 12px;min-height:120px;border-radius:12px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font-size:16px' }), cnt = h('div', { class: 'fbcnt', text: String(ans[q.id].length) + ' / ' + fmtNum(max) });
+        ta.value = ans[q.id]; ta.oninput = e => { ans[q.id] = e.target.value; cnt.textContent = e.target.value.length + ' / ' + fmtNum(max); const b = ov.querySelector('.fbsend'); if (b) b.disabled = !has(); };
+        body.append(ta, cnt);
+      }
+      body.append(h('div', { class: 'fbstep', text: t('Question') + ' ' + (step + 1) + ' ' + t('of') + ' ' + cfg.q.length }));
+      if (err) body.append(h('div', { class: 'errl', role: 'alert', text: err }));
+    }
+    const foot = done || busy ? null : h('footer', {},
+      h('button', { class: 'btn', type: 'button', onclick: () => (last ? send(true) : close(true)) }, last ? t('Skip') : t('Not now')),
+      h('button', { class: 'btn primary fbsend', type: 'button', disabled: last && !has(), onclick: () => (last ? send(false) : (step++, draw())) }, last ? t('Send') : t('Next')));
+    const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'fbt' },
+      h('header', {}, h('h2', { id: 'fbt', text: t('Quick question') }), h('button', { class: 'icon-btn', type: 'button', 'aria-label': t('Close'), onclick: () => close(true) }, '✕')), body, foot);
+    ov.append(sheet);
+    const f = sheet.querySelector(step === cfg.q.length - 1 && !done && !busy ? 'textarea' : '.fbs button, .btn.primary'); if (f && !done) f.focus({ preventScroll: true });
+  };
+  ov.onclick = e => { if (e.target === ov) close(true); };
+  document.addEventListener('keydown', key, true);
+  ov.hidden = false; document.body.style.overflow = 'hidden'; draw();
+  window.__fbLang = () => { if (getLang() !== lang) { lang = getLang(); api.call('feedbackCfg', { lang }).then(c => { if (c && c.q) { cfg.q.forEach((q, i) => { q.text = c.q[i].text; }); cfg.scale = c.scale; if (!ov.hidden) draw(); } }).catch(() => {}); } };
 }

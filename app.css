@@ -260,3 +260,11 @@ button{cursor:pointer}
 .plantload[hidden]{display:none!important}
 @keyframes plantTxt{from{opacity:.45}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.plantload span{animation:none}}
+/* feedback popup: only app variables */
+.fbq{margin:6px 14px 14px;font:700 19px/1.25 var(--display);color:var(--ink)}
+.fbs{display:flex;gap:8px;margin:0 14px}.fbs button{flex:1;min-height:52px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:700 18px var(--font)}
+.fbs button.on{background:var(--spruce);border-color:var(--spruce);color:var(--on-spruce)}
+.fbl{display:flex;justify-content:space-between;gap:8px;margin:6px 16px 0;color:var(--ink-3);font-size:13px}
+.fbsel{text-align:center;margin:8px 14px;min-height:20px;font-weight:700;color:var(--spruce)}
+.fbcnt{text-align:right;margin:4px 16px;color:var(--ink-3);font-size:13px}
+.fbstep{text-align:center;margin:10px 0 4px;color:var(--ink-3);font-size:13px}
