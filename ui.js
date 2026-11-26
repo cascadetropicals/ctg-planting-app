@@ -751,7 +751,7 @@ export function applyLang(l) {
 // All limits are constants here. The questions and their texts live in the backend (FEEDBACK block in PlantingApi.gs).
 // No name, token or device id is sent: the answer cannot be linked to a person. Cooldown lives only in this browser.
 const FB = {
-  AUTO: false,        // false = no automatic popup yet (only the "Give feedback" menu entry). Set true at go-live.
+  AUTO: true,         // true = automatic monthly popup is on (the "Give feedback" menu entry always works). false = menu entry only.
   MIN_DAYS: 3,        // asked only after the app was used on this many different days
   COOLDOWN_DAYS: 30,  // after an answer: no popup for this long
   SNOOZE_DAYS: 7,     // after "Not now": ask again after this long
