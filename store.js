@@ -104,10 +104,11 @@ export async function syncEmpieza() {
 }
 
 // ---------- auth ----------
+export const pacificDay = (t = Date.now()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(t));
 export async function login(name, idToken) {
   const res = await api.call('login', { name, idToken });
   if (res.error) throw new Error(res.error);
-  S.user = { name: res.name, token: res.token, email: res.email || '' }; LS.set('ctg_user', S.user);
+  S.user = { name: res.name, token: res.token, email: res.email || '', day: pacificDay() }; LS.set('ctg_user', S.user);
   return S.user;
 }
 export const setTablet = e => { S.tablet = e; LS.set('ctg_tablet', e); emit('data'); };
@@ -121,6 +122,24 @@ export async function presence(mode) {
     if (r && r.users) { S.pres = r; emit('data'); }
   } catch (e) { if (e.auth) throw e; }
   return S.pres;
+}
+
+// ---------- sessions + new-day sign-out ----------
+// Every app open / sign-in is logged in the Sessions tab (device, name, time) so the "Devices and names" report can show who used which device.
+let SID = '';
+export async function sessionStart(event) {
+  if (!S.user || api.isDemo()) return;
+  SID = uid(); const sid = SID, user = S.user;
+  for (let i = 0; i < 4; i++) { // offline at open: try again a few times, the same id never makes two rows
+    try { await api.call('session', { dev: DEV, sid, ver: CONFIG.VERSION, event: event || 'open' }, user.token); return; }
+    catch (e) { if (e.auth || S.user !== user) return; await new Promise(r => setTimeout(r, 30000)); }
+  }
+}
+// Signed in on an earlier day (Pacific) = sign in again, so tomorrow's first person cannot continue as yesterday's.
+export function dayExpired() {
+  if (!S.user) return false;
+  if (!S.user.day) { S.user.day = pacificDay(); LS.set('ctg_user', S.user); return false; } // sessions from before this rule start today
+  return S.user.day !== pacificDay();
 }
 export const myDup = () => (S.pres.users || []).find(u => u.me && u.dup);
 export function logout() {

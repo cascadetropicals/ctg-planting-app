@@ -49,6 +49,11 @@ const ES = {
   // audit
   'Give feedback': 'Dar opinión', 'Quick question': 'Una pregunta rápida', 'Not now': 'Ahora no', 'Next': 'Siguiente', 'Skip': 'Omitir', 'Send': 'Enviar', 'Add a note': 'Agregar una nota', 'Question': 'Pregunta', 'of': 'de',
   'Thank you. This helps us improve the app.': 'Gracias. Esto nos ayuda a mejorar la app.', 'Could not send. Try again.': 'No se pudo enviar. Inténtalo de nuevo.', 'Could not load. Try again.': 'No se pudo cargar. Inténtalo de nuevo.',
+  'Is this you?': '¿Eres tú?', 'Signed in as': 'Sesión iniciada como', 'Yes, I am': 'Sí, soy', 'No, switch user': 'No, cambiar de usuario', 'New day: please sign in again.': 'Nuevo día: inicia sesión otra vez.',
+  'Devices and names': 'Dispositivos y nombres', 'Last 14 days. Each app open or sign-in is one session.': 'Últimos 14 días. Cada apertura de la app o inicio de sesión es una sesión.', 'More than one name today': 'Más de un nombre hoy',
+  'A device used by 2 or more names today. This can be normal on a shared tablet. Check that records have the right name.': 'Un dispositivo usado por 2 o más nombres hoy. Puede ser normal en una tableta compartida. Revisa que los registros tengan el nombre correcto.',
+  'No device had more than one name today.': 'Ningún dispositivo tuvo más de un nombre hoy.', 'Device': 'Dispositivo', 'usual': 'habitual', 'Today': 'Hoy', '14 days': '14 días', 'sessions': 'sesiones', 'Other devices': 'Otros dispositivos',
+  'Nothing here yet.': 'Aún no hay nada.', 'The report needs a connection.': 'El informe necesita conexión.',
   'Audit double submissions': 'Revisar registros dobles', 'Planting records': 'Registros de siembra', 'Plug planting records': 'Registros de siembra de plugs',
   'Exact copies': 'Copias exactas', 'Possible doubles (look only)': 'Posibles dobles (solo mirar)', 'Checking…': 'Revisando…',
   'Same second, plant, quantity and email. The first copy is always kept.': 'Mismo segundo, planta, cantidad y correo. La primera copia siempre se queda.',

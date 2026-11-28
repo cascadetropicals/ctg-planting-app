@@ -74,6 +74,10 @@ export async function handle(action, body, token) {
     return { exact: [{ kind: 'fin', ...A, keep: 100, copies: [{ row: 101, ...A }] }], near: [{ kind: 'plug', mins: 4.5, a: { row: 5, plant: 'P', qty: '3', ts: '2026-11-20 10:00:00', email: 'a@x.com' }, b: { row: 6, plant: 'P', qty: '3', ts: '2026-11-20 10:04:30', email: 'a@x.com' } }] }; }
   if (action === 'auditDelete') return { ok: true };
   if (action === 'quality') return { name: 'demo_1.jpg' };
+  if (action === 'session') return { n: 1 };
+  if (action === 'sessionReport') return { today: '2026-11-28', rows: 5, devices: [
+    { dev: 'devA1111', short: '1111', email: 'tab1@x.com', last: '2026-11-28 11:30:00', sessions: 9, usual: 'Maria', names: [{ name: 'Maria', n: 7, last: '2026-11-28 08:00:00' }, { name: 'Luis', n: 2, last: '2026-11-28 11:30:00' }], today: [{ name: 'Maria', n: 1, first: '2026-11-28 08:00:00', last: '2026-11-28 08:00:00' }, { name: 'Luis', n: 1, first: '2026-11-28 11:30:00', last: '2026-11-28 11:30:00' }], others: ['Luis'], flag: true },
+    { dev: 'devC3333', short: '3333', email: '', last: '2026-11-28 09:00:00', sessions: 4, usual: 'Eva', names: [{ name: 'Eva', n: 4, last: '2026-11-28 09:00:00' }], today: [{ name: 'Eva', n: 1, first: '2026-11-28 09:00:00', last: '2026-11-28 09:00:00' }], others: [], flag: false }] };
   if (action === 'feedbackCfg') { const es = body.lang !== 'en'; return { round: '2026-11', scale: es ? ['Muy en desacuerdo', 'En desacuerdo', 'Neutral', 'De acuerdo', 'Muy de acuerdo'] : ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree'], q: [
     { id: 'ease', type: 'scale', text: es ? 'La app es fácil de usar.' : 'The app is easy to use.' }, { id: 'speed', type: 'scale', text: es ? 'La app es lo bastante rápida.' : 'The app is fast enough.' },
     { id: 'open', type: 'text', max: 500, text: es ? '¿Hay algo que te moleste o alguna sugerencia para mejorar la app? (opcional)' : 'Is there anything that annoys you, or any suggestion to improve the app? (optional)' }] }; }

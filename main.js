@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { S, login, loadAll, start, subscribe, setTablet, presence, logout } from './store.js';
+import { S, login, loadAll, start, subscribe, setTablet, presence, logout, sessionStart, dayExpired } from './store.js';
 import { mount, refreshUI, translateStatic, applyLang, askDuplicate } from './ui.js';
 import { t } from './i18n.js';
 import { isDemo, call } from './api.js';
@@ -7,12 +7,19 @@ import { isDemo, call } from './api.js';
 const $ = s => document.querySelector(s);
 let mounted = false;
 
+// New day (Pacific): sign out so the next person signs in with their own name. Waits while unsent records are queued or a sheet is open.
+function newDayCheck() {
+  if (!S.user || !dayExpired() || S.queue.length) return false;
+  const ov = $('#overlay'); if (ov && !ov.hidden) return false;
+  logout(); showLogin(t('New day: please sign in again.')); return true;
+}
 async function enter(fresh) {
+  if (newDayCheck()) return;
   $('#login').hidden = true; $('#app').hidden = false;
   if (!mounted) { mount(); mounted = true; }
   refreshUI();
   try { await loadAll(); } catch (e) { if (e.auth) return showLogin(); }
-  refreshUI(); start();
+  refreshUI(); start(); sessionStart(fresh ? 'login' : 'open');
   const p = await presence(fresh ? 'login' : 'ping'); // who else is logged in with this account today?
   const mine = (p.users || []).find(u => u.me);
   if (fresh && mine && mine.dup) askDuplicate((p.users || []).filter(u => !u.me && (mine.with || []).includes(u.dev)), mine, logout);
@@ -91,4 +98,5 @@ if ('serviceWorker' in navigator) {
     go();
   });
 }
+setInterval(newDayCheck, 30000); document.addEventListener('visibilitychange', () => { if (!document.hidden) newDayCheck(); });
 if (S.user) enter(); else showLogin();

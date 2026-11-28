@@ -240,7 +240,14 @@ function toast(msg) {
   let t = document.querySelector('#toast'); if (!t) { t = h('div', { id: 'toast', role: 'status' }); document.body.append(t); }
   t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 4000);
 }
+// One tap check before Empieza is saved: is the person holding the tablet the signed-in person?
 function empieza(kind) {
+  const name = (S.user && S.user.name) || '';
+  choose(t('Is this you?'), t('Signed in as') + ' ' + name + '.', [
+    { label: t('Yes, I am') + ' ' + name, run: () => empiezaGo(kind) },
+    { label: t('No, switch user'), run: () => logout() }]);
+}
+function empiezaGo(kind) {
   const label = kind === 'plug' ? 'Plugs' : 'Finished', last = empLast(kind);
   const go = () => {
     addRecord(kind === 'plug' ? 'gfPlug' : 'gfFin', { 'Choose Plant': 'Empieza', Employee: S.user.name }, null);
@@ -651,6 +658,36 @@ function renderDup() {
 // loading plant: small animated plant + text (CSS .plantload); sm = no box, for inside sheets
 export const waitBox = (text, sm) => h('div', { class: 'plantload' + (sm ? ' sm' : ''), role: 'status' }, h('span', { text }));
 
+// ---------------- report: devices and names (from the Sessions tab) ----------------
+export async function showDevices() {
+  const ov = $('#overlay'), close = () => { ov.hidden = true; ov.textContent = ''; document.body.style.overflow = ''; };
+  const body = h('div', { class: 'body audit' });
+  const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' },
+    h('header', {}, h('h2', { text: t('Devices and names') }), h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', onclick: close }, '✕')), body);
+  ov.textContent = ''; ov.append(sheet); ov.hidden = false; document.body.style.overflow = 'hidden'; ov.onclick = e => { if (e.target === ov) close(); };
+  const hm = ts => { const m = /(\d\d):(\d\d)/.exec(String(ts).slice(11)); return m ? (+m[1] % 12 || 12) + ':' + m[2] + (+m[1] < 12 ? ' am' : ' pm') : ''; };
+  async function load() {
+    body.textContent = ''; body.append(waitBox(t('Checking…')));
+    let r; try { r = await api.call('sessionReport', {}, S.user.token); } catch (e) { r = { error: 'net' }; }
+    body.textContent = '';
+    if (!r || r.error) { body.append(h('p', { class: 'hint', text: r && r.error && r.error !== 'net' ? r.error : t('The report needs a connection.') }), h('div', { class: 'ahead' }, h('button', { class: 'btn', type: 'button', onclick: load }, t('Rescan')))); return; }
+    body.append(h('div', { class: 'ahead' }, h('small', { text: t('Last 14 days. Each app open or sign-in is one session.') }), h('button', { class: 'btn', type: 'button', onclick: load }, '↻ ' + t('Rescan'))));
+    const flagged = r.devices.filter(d => d.flag);
+    body.append(h('h3', { text: t('More than one name today') + ' (' + fmtNum(flagged.length) + ')' }), h('p', { class: 'hint', text: t('A device used by 2 or more names today. This can be normal on a shared tablet. Check that records have the right name.') }));
+    if (!flagged.length) body.append(h('p', { class: 'hint', text: t('No device had more than one name today.') }));
+    const card = d => h('div', { class: 'agrp' },
+      h('div', { class: 'ak', text: t('Device') + ' …' + d.short + ' · ' + t('usual') + ': ' + (d.usual || '—') + (d.email ? ' · ' + d.email : '') }),
+      d.today.length ? h('div', { class: 'arow' }, h('span', { class: 'atag', text: t('Today') }), h('span', { text: d.today.map(x => x.name + ' (' + hm(x.first) + (x.last !== x.first ? '–' + hm(x.last) : '') + ')').join(' · ') })) : null,
+      h('div', { class: 'arow' }, h('span', { class: 'atag', text: t('14 days') }), h('span', { text: d.names.map(x => x.name + ' ×' + fmtNum(x.n)).join(' · ') + ' · ' + fmtNum(d.sessions) + ' ' + t('sessions') })));
+    flagged.forEach(d => body.append(card(d)));
+    const rest = r.devices.filter(d => !d.flag);
+    body.append(h('h3', { text: t('Other devices') + ' (' + fmtNum(rest.length) + ')' }));
+    if (!rest.length) body.append(h('p', { class: 'hint', text: t('Nothing here yet.') }));
+    rest.forEach(d => body.append(card(d)));
+  }
+  load();
+}
+
 // ---------------- audit: double submissions ----------------
 // Exact copies (same second + plant + qty + email) can be deleted (the first copy stays; the full row is archived in Audit_Deleted first).
 // Near doubles are shown for looking only. Online only; the server re-checks every row before it deletes.
@@ -702,6 +739,7 @@ export function openMenu() {
   m.append(h('button', { type: 'button', onclick: () => { m.hidden = true; applyLang(getLang() === 'es' ? 'en' : 'es'); } }, t('Language') + ': ' + (getLang() === 'es' ? 'Español → English' : 'English → Español')),
     h('button', { type: 'button', onclick: () => { m.hidden = true; showUsers(); } }, t('Current users')),
     h('button', { type: 'button', onclick: () => { m.hidden = true; showFeedback(false); } }, t('Give feedback')),
+    h('button', { type: 'button', onclick: () => { m.hidden = true; showDevices(); } }, t('Devices and names')),
     h('button', { type: 'button', onclick: () => { m.hidden = true; showAudit(); } }, t('Audit double submissions')),
     h('button', { type: 'button', onclick: () => { m.hidden = true; refreshNow(); } }, 'Refresh now'),
     h('button', { type: 'button', onclick: () => { m.hidden = true; logout(); } }, 'Switch user'));
